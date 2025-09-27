@@ -18,11 +18,11 @@ function MenuPrincipal() {
       const usuarioData = localStorage.getItem('usuario');
       const parsedData = JSON.parse(usuarioData);
       const rolUsuario = parsedData.rol;
-      const response = await axios.get(`http://localhost:4000/menu-rol/${encodeURIComponent(rolUsuario)}`);
+      const response = await axios.get(`https://frozenback-production.up.railway.app/api/empleados/permisos-rol/${encodeURIComponent(rolUsuario)}`);
 
 
         
-      const opcionesMenu = response.data.opciones_menu;
+      const opcionesMenu = response.data.permisos;
 
         setData(opcionesMenu)
       } catch (err) {
@@ -63,7 +63,7 @@ function MenuPrincipal() {
     <div className={styles.home}>
       <div className={styles.content}>
         {data.map(item => (
-          <div key={item.id} className={styles.card}>
+          <div key={item.id_permiso} className={styles.card}>
             <h3 className={styles.cardTitle}>{item.titulo}</h3>
             <p className={styles.cardDescription}>{item.descripcion}</p>
             <button onClick={() => navigate(item.link)} className={styles.cardButton}>
