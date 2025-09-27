@@ -73,7 +73,7 @@ const Login = () => {
     <div className={styles.loginContainer}>
       <div className={styles.loginCard}>
         <div className={styles.logoSection}>
-          <h1 className={styles.logo}>PYMEAPP</h1>
+          <h1 className={styles.logo}>PYMEAPPsfsdaf</h1>
           <p className={styles.tagline}>Sistema de gestión integral</p>
         </div>
         
