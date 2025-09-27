@@ -15,9 +15,9 @@ function AutenticacionFacial() {
         if (usuarioData) {
             const usuario = JSON.parse(usuarioData);
             
-            if (usuario.vector && usuario.vectores.length > 0) {        
+            if (usuario.vector && usuario.vector.length > 0) {        
                 
-                setVectoresUsuario(new Float32Array(usuario.vectores) );
+                setVectoresUsuario(new Float32Array(usuario.vector) );
                 
                 return true;
             } else {
