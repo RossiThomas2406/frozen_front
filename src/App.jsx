@@ -7,9 +7,9 @@ import Fichaje from './pages/Fichajes/Fichaje'
 import Login from './pages/Login/Login'
 import GestionClientes from './pages/GestionClientes/GestionClientes'
 import Ventas from './pages/Ventas/Ventas'
-
 import './App.css'
 
+import ProtectedRoutes from './utils/ProtectedRoutes'
 
 function App() {
   return (
@@ -19,11 +19,13 @@ function App() {
         <main className="main-content">
             <Routes>
               <Route path="/" element={<Login />} />
-              <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
-              <Route path="/home" element={<MenuPrincipal />} />
-              <Route path="/fichaje" element={<Fichaje />} />
-              <Route path="/clientes" element={<GestionClientes />} />
-              <Route path="/ventas" element={<Ventas />} />
+              <Route element={<ProtectedRoutes></ProtectedRoutes>}>
+                <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
+                <Route path="/home" element={<MenuPrincipal />} />
+                <Route path="/fichaje" element={<Fichaje />} />
+                <Route path="/clientes" element={<GestionClientes />} />
+                <Route path="/ventas" element={<Ventas />} />
+              </Route>
             </Routes>
         </main>
         <Footer />
