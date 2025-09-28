@@ -22,8 +22,8 @@ function App() {
               <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
               <Route path="/home" element={<MenuPrincipal />} />
               <Route path="/fichaje" element={<Fichaje />} />
-              <Route path="/home/clientes" element={<GestionClientes />} />
-              <Route path="/home/ventas" element={<Ventas />} />
+              <Route path="/clientes" element={<GestionClientes />} />
+              <Route path="/ventas" element={<Ventas />} />
             </Routes>
         </main>
         <Footer />
