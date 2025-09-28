@@ -282,15 +282,15 @@ function Ventas() {
               <div key={orden.id} className={styles.ordenCard}>
                 <div className={styles.ordenHeader}>
                   <div>
-                    <h2 className={styles.ordenId}>Orden #{orden.id}</h2>
+                    <h2 className={styles.ordenId}>Orden #{orden.id_orden_venta}</h2>
                   </div>
-                  <span className={styles.clienteNombre}>{orden.nombreCliente}</span>
+                  <span className={styles.clienteNombre}>{orden.cliente.nombre}</span>
                 </div>
                 
                 <div className={styles.ordenDates}>
                   <div className={styles.dateItem}>
                     <span className={styles.dateLabel}>📅 Emisión:</span>
-                    <span className={styles.dateValue}>{formatFecha(orden.fechaEmision)}</span>
+                    <span className={styles.dateValue}>{formatFecha(orden.fecha)}</span>
                   </div>
                   <div className={styles.dateItem}>
                     <span className={styles.dateLabel}>🚚 Entrega estimada:</span>
