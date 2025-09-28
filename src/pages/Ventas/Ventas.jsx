@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// import axios from "axios"; // Descomentar cuando la API esté lista
+import axios from "axios"; // Descomentar cuando la API esté lista
 import styles from "./Ventas.module.css";
 
 function Ventas() {
@@ -72,14 +72,14 @@ function Ventas() {
   ];
 
   // IMPLEMENTACIÓN CON API AXIOS (COMENTADA - ACTIVAR CUANDO LA API ESTÉ LISTA)
-  /*
   const fetchOrdenesAPI = async () => {
     try {
       setLoading(true);
       setError(null);
       
       // NOTA: Cambiar la URL por el endpoint real de tu API
-      const response = await axios.get("/api/ordenes-venta/activas");
+      const response = await axios.get("https://frozenback-production.up.railway.app/api/ventas/ordenes-venta/");
+      console.log(response.data);
       
       // Asegurarnos de que siempre sea un array
       const ordenesData = response.data || [];
@@ -92,7 +92,6 @@ function Ventas() {
       setLoading(false);
     }
   };
-  */
 
   // IMPLEMENTACIÓN CON DATOS MOCK (ACTUALMENTE ACTIVA)
   const fetchOrdenesMock = async () => {
@@ -170,7 +169,7 @@ function Ventas() {
   // Función principal que decide qué implementación usar
   const fetchOrdenes = async () => {
     // Para cambiar a la API real, simplemente cambiar fetchOrdenesMock por fetchOrdenesAPI
-    await fetchOrdenesMock(); // ← CAMBIAR POR fetchOrdenesAPI CUANDO LA API ESTÉ LISTA
+    await fetchOrdenesAPI(); // ← CAMBIAR POR fetchOrdenesAPI CUANDO LA API ESTÉ LISTA
   };
 
   useEffect(() => {
@@ -281,18 +280,18 @@ function Ventas() {
             const prioridadInfo = getPrioridadInfo(orden.prioridad);
             
             return (
-              <div key={orden.id} className={styles.ordenCard}>
+              <div key={orden.id_orden_venta} className={styles.ordenCard}>
                 <div className={styles.ordenHeader}>
                   <div>
-                    <h2 className={styles.ordenId}>Orden #{orden.id}</h2>
+                    <h2 className={styles.ordenId}>Orden #{orden.id_orden_venta}</h2>
                   </div>
-                  <span className={styles.clienteNombre}>{orden.nombreCliente}</span>
+                  <span className={styles.clienteNombre}>{orden.cliente.nombre}</span>
                 </div>
                 
                 <div className={styles.ordenDates}>
                   <div className={styles.dateItem}>
                     <span className={styles.dateLabel}>📅 Emisión:</span>
-                    <span className={styles.dateValue}>{formatFecha(orden.fechaEmision)}</span>
+                    <span className={styles.dateValue}>{formatFecha(orden.fecha)}</span>
                   </div>
                   <div className={styles.dateItem}>
                     <span className={styles.dateLabel}>🚚 Entrega estimada:</span>
@@ -314,10 +313,10 @@ function Ventas() {
                     {orden.productos.map((producto, index) => (
                       <div key={index} className={styles.productoItem}>
                         <span className={styles.productoNombre}>
-                          {producto.nombre}
+                          {producto.producto.descripcion}
                         </span>
                         <span className={styles.productoDetalle}>
-                          <strong>{producto.cantidad}</strong> {producto.unidadMedida}
+                          <strong>{producto.cantidad}</strong> {producto.producto.unidad.descripcion}
                         </span>
                       </div>
                     ))}
