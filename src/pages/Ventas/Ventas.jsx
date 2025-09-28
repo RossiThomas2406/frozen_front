@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // Descomentar cuando la API esté lista
+import axios from "axios";
 import styles from "./Ventas.module.css";
 
 function Ventas() {
@@ -9,76 +9,16 @@ function Ventas() {
   const [ordenEditando, setOrdenEditando] = useState(null);
   const [guardando, setGuardando] = useState(false);
 
-  // Datos mockeados para PYME de alimentos congelados
-  const datosMock = [
-    {
-      id: 1,
-      nombreCliente: "Supermercado La Economía",
-      fechaEmision: "2024-01-15",
-      fechaEntregaEstimada: "2024-01-17",
-      prioridad: "normal",
-      productos: [
-        {
-          nombre: "Pizza de jamón y queso",
-          cantidad: 50,
-          unidadMedida: "unidades"
-        },
-        {
-          nombre: "Hamburguesas de carne",
-          cantidad: 100,
-          unidadMedida: "unidades"
-        },
-        {
-          nombre: "Papas fritas",
-          cantidad: 25,
-          unidadMedida: "kg"
-        },
-        {
-          nombre: "Helado de vainilla",
-          cantidad: 30,
-          unidadMedida: "litros"
-        }
-      ]
-    },
-    {
-      id: 2,
-      nombreCliente: "Restaurante El Fogón",
-      fechaEmision: "2024-01-16",
-      fechaEntregaEstimada: "2024-01-18",
-      prioridad: "alta",
-      productos: [
-        {
-          nombre: "Camaronés empanizados",
-          cantidad: 15,
-          unidadMedida: "kg"
-        },
-        {
-          nombre: "Vegetales mixtos",
-          cantidad: 20,
-          unidadMedida: "kg"
-        },
-        {
-          nombre: "Pollo precocido",
-          cantidad: 25,
-          unidadMedida: "kg"
-        },
-        {
-          nombre: "Base para pizza",
-          cantidad: 40,
-          unidadMedida: "unidades"
-        }
-      ]
-    }
-  ];
+  // URL base de la API
+  const API_BASE_URL = "https://frozenback-production.up.railway.app/api/ventas";
 
-  // IMPLEMENTACIÓN CON API AXIOS (COMENTADA - ACTIVAR CUANDO LA API ESTÉ LISTA)
+  // Obtener órdenes de venta
   const fetchOrdenesAPI = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // NOTA: Cambiar la URL por el endpoint real de tu API
-      const response = await axios.get("https://frozenback-production.up.railway.app/api/ventas/ordenes-venta/");
+      const response = await axios.get(`${API_BASE_URL}/ordenes-venta/`);
       console.log(response.data);
       
       // Asegurarnos de que siempre sea un array
@@ -93,74 +33,66 @@ function Ventas() {
     }
   };
 
-  // IMPLEMENTACIÓN CON DATOS MOCK (ACTUALMENTE ACTIVA)
-  const fetchOrdenesMock = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Simular éxito o error aleatorio (opcional, para testing)
-      const shouldFail = false; // Cambiar a true para probar el estado de error
-      
-      if (shouldFail) {
-        throw new Error("Error simulado de conexión");
-      }
-      
-      setOrdenes(datosMock);
-      
-    } catch (err) {
-      setError("Error al cargar las órdenes de venta: " + err.message);
-      console.error("Error fetching orders:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para guardar los cambios de la orden
+  // Función para guardar los cambios de la orden usando PUT
   const guardarOrden = async (ordenActualizada) => {
     try {
       setGuardando(true);
       
-      // IMPLEMENTACIÓN CON API AXIOS (COMENTADA - ACTIVAR CUANDO LA API ESTÉ LISTA)
-      /*
-      const response = await axios.put(`/api/ordenes-venta/${ordenActualizada.id}`, ordenActualizada);
+      // Preparar los datos para enviar a la API
+      const datosActualizados = {
+        id_orden_venta: ordenActualizada.id_orden_venta,
+        cliente: {
+          id_cliente: ordenActualizada.cliente.id_cliente,
+          nombre: ordenActualizada.cliente.nombre
+        },
+        fecha: ordenActualizada.fecha,
+        fechaEntregaEstimada: ordenActualizada.fechaEntregaEstimada,
+        prioridad: ordenActualizada.prioridad,
+        productos: ordenActualizada.productos.map(producto => ({
+          id_producto: producto.producto.id_producto,
+          cantidad: producto.cantidad,
+          producto: {
+            id_producto: producto.producto.id_producto,
+            descripcion: producto.producto.descripcion,
+            unidad: {
+              id_unidad: producto.producto.unidad.id_unidad,
+              descripcion: producto.producto.unidad.descripcion
+            }
+          }
+        }))
+      };
+
+      console.log("Enviando datos actualizados:", datosActualizados);
+
+      // Llamada PUT a la API
+      const response = await axios.put(
+        `${API_BASE_URL}/ordenes-venta/${ordenActualizada.id_orden_venta}/`, 
+        datosActualizados,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
       
       if (response.status === 200) {
         // Actualizar el estado local con la orden modificada
         setOrdenes(prevOrdenes => 
           prevOrdenes.map(orden => 
-            orden.id === ordenActualizada.id ? ordenActualizada : orden
+            orden.id_orden_venta === ordenActualizada.id_orden_venta ? response.data : orden
           )
         );
         
         cerrarModal();
         
-        // Opcional: Mostrar mensaje de éxito
+        // Mostrar mensaje de éxito
         alert('Orden actualizada correctamente');
       }
-      */
-      
-      // IMPLEMENTACIÓN MOCK (ACTUALMENTE ACTIVA)
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simular delay de guardado
-      
-      // Actualizar el estado local con la orden modificada
-      setOrdenes(prevOrdenes => 
-        prevOrdenes.map(orden => 
-          orden.id === ordenActualizada.id ? ordenActualizada : orden
-        )
-      );
-      
-      cerrarModal();
-      
-      // Mostrar mensaje de éxito
-      alert('Orden actualizada correctamente (modo demo)');
       
     } catch (err) {
       console.error("Error al guardar la orden:", err);
-      alert('Error al guardar la orden: ' + err.message);
+      const errorMessage = err.response?.data?.message || err.message || 'Error desconocido';
+      alert('Error al guardar la orden: ' + errorMessage);
     } finally {
       setGuardando(false);
     }
@@ -168,8 +100,7 @@ function Ventas() {
 
   // Función principal que decide qué implementación usar
   const fetchOrdenes = async () => {
-    // Para cambiar a la API real, simplemente cambiar fetchOrdenesMock por fetchOrdenesAPI
-    await fetchOrdenesAPI(); // ← CAMBIAR POR fetchOrdenesAPI CUANDO LA API ESTÉ LISTA
+    await fetchOrdenesAPI();
   };
 
   useEffect(() => {
@@ -183,6 +114,17 @@ function Ventas() {
       return new Date(fechaString).toLocaleDateString('es-ES');
     } catch (error) {
       return "Fecha inválida";
+    }
+  };
+
+  // Función para formatear fecha para input type="date"
+  const formatFechaParaInput = (fechaString) => {
+    if (!fechaString) return "";
+    try {
+      const fecha = new Date(fechaString);
+      return fecha.toISOString().split('T')[0];
+    } catch (error) {
+      return "";
     }
   };
 
@@ -203,7 +145,15 @@ function Ventas() {
   };
 
   const abrirModal = (orden) => {
-    setOrdenEditando({...orden});
+    setOrdenEditando({
+      ...orden,
+      // Crear una copia profunda para evitar mutaciones
+      productos: orden.productos.map(producto => ({
+        ...producto,
+        producto: { ...producto.producto },
+        cantidad: producto.cantidad
+      }))
+    });
   };
 
   const cerrarModal = () => {
@@ -218,13 +168,47 @@ function Ventas() {
     }));
   };
 
+  const handleClienteChange = (e) => {
+    const { value } = e.target;
+    setOrdenEditando(prev => ({
+      ...prev,
+      cliente: {
+        ...prev.cliente,
+        nombre: value
+      }
+    }));
+  };
+
   const handleProductoChange = (index, field, value) => {
     setOrdenEditando(prev => {
       const nuevosProductos = [...prev.productos];
-      nuevosProductos[index] = {
-        ...nuevosProductos[index],
-        [field]: value
-      };
+      
+      if (field === 'cantidad') {
+        nuevosProductos[index] = {
+          ...nuevosProductos[index],
+          [field]: parseFloat(value) || 0
+        };
+      } else if (field === 'descripcion') {
+        nuevosProductos[index] = {
+          ...nuevosProductos[index],
+          producto: {
+            ...nuevosProductos[index].producto,
+            descripcion: value
+          }
+        };
+      } else if (field === 'unidad') {
+        nuevosProductos[index] = {
+          ...nuevosProductos[index],
+          producto: {
+            ...nuevosProductos[index].producto,
+            unidad: {
+              ...nuevosProductos[index].producto.unidad,
+              descripcion: value
+            }
+          }
+        };
+      }
+      
       return {
         ...prev,
         productos: nuevosProductos
@@ -327,7 +311,7 @@ function Ventas() {
                     className={styles.detalleButton}
                     onClick={() => abrirModal(orden)}
                   >
-                    Ver detalles completos
+                    Editar Orden
                   </button>
                 </div>
               </div>
@@ -341,7 +325,7 @@ function Ventas() {
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h2>Editar Orden #{ordenEditando.id}</h2>
+              <h2>Editar Orden #{ordenEditando.id_orden_venta}</h2>
               <button className={styles.closeButton} onClick={cerrarModal}>×</button>
             </div>
             
@@ -351,9 +335,10 @@ function Ventas() {
                 <input
                   type="text"
                   name="nombreCliente"
-                  value={ordenEditando.nombreCliente}
-                  onChange={handleInputChange}
+                  value={ordenEditando.cliente.nombre}
+                  onChange={handleClienteChange}
                   className={styles.input}
+                  required
                 />
               </div>
               
@@ -362,10 +347,11 @@ function Ventas() {
                   <label>Fecha Emisión:</label>
                   <input
                     type="date"
-                    name="fechaEmision"
-                    value={ordenEditando.fechaEmision}
+                    name="fecha"
+                    value={formatFechaParaInput(ordenEditando.fecha)}
                     onChange={handleInputChange}
                     className={styles.input}
+                    required
                   />
                 </div>
                 
@@ -374,9 +360,10 @@ function Ventas() {
                   <input
                     type="date"
                     name="fechaEntregaEstimada"
-                    value={ordenEditando.fechaEntregaEstimada}
+                    value={formatFechaParaInput(ordenEditando.fechaEntregaEstimada)}
                     onChange={handleInputChange}
                     className={styles.input}
+                    required
                   />
                 </div>
               </div>
@@ -388,6 +375,7 @@ function Ventas() {
                   value={ordenEditando.prioridad}
                   onChange={handleInputChange}
                   className={styles.select}
+                  required
                 >
                   <option value="baja">Baja</option>
                   <option value="normal">Normal</option>
@@ -400,30 +388,49 @@ function Ventas() {
                 <h3>Productos:</h3>
                 {ordenEditando.productos.map((producto, index) => (
                   <div key={index} className={styles.productoEditItem}>
-                    <input
-                      type="text"
-                      value={producto.nombre}
-                      onChange={(e) => handleProductoChange(index, 'nombre', e.target.value)}
-                      className={styles.input}
-                      placeholder="Nombre del producto"
-                    />
-                    <input
-                      type="number"
-                      value={producto.cantidad}
-                      onChange={(e) => handleProductoChange(index, 'cantidad', parseFloat(e.target.value))}
-                      className={styles.inputCantidad}
-                      placeholder="Cantidad"
-                    />
-                    <select
-                      value={producto.unidadMedida}
-                      onChange={(e) => handleProductoChange(index, 'unidadMedida', e.target.value)}
-                      className={styles.selectUnidad}
-                    >
-                      <option value="unidades">Unidades</option>
-                      <option value="kg">Kg</option>
-                      <option value="litros">Litros</option>
-                      <option value="cajas">Cajas</option>
-                    </select>
+                    <div className={styles.productoEditRow}>
+                      <div className={styles.formGroup}>
+                        <label>Producto:</label>
+                        <input
+                          type="text"
+                          value={producto.producto.descripcion}
+                          onChange={(e) => handleProductoChange(index, 'descripcion', e.target.value)}
+                          className={styles.input}
+                          placeholder="Descripción del producto"
+                          required
+                        />
+                      </div>
+                      
+                      <div className={styles.formGroup}>
+                        <label>Cantidad:</label>
+                        <input
+                          type="number"
+                          value={producto.cantidad}
+                          onChange={(e) => handleProductoChange(index, 'cantidad', e.target.value)}
+                          className={styles.inputCantidad}
+                          placeholder="Cantidad"
+                          min="0"
+                          step="0.01"
+                          required
+                        />
+                      </div>
+                      
+                      <div className={styles.formGroup}>
+                        <label>Unidad:</label>
+                        <select
+                          value={producto.producto.unidad.descripcion}
+                          onChange={(e) => handleProductoChange(index, 'unidad', e.target.value)}
+                          className={styles.selectUnidad}
+                          required
+                        >
+                          <option value="unidades">Unidades</option>
+                          <option value="kg">Kg</option>
+                          <option value="litros">Litros</option>
+                          <option value="cajas">Cajas</option>
+                          <option value="paquetes">Paquetes</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -433,6 +440,7 @@ function Ventas() {
                   type="button" 
                   className={styles.cancelButton}
                   onClick={cerrarModal}
+                  disabled={guardando}
                 >
                   Cancelar
                 </button>
