@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// import axios from "axios"; // Descomentar cuando la API esté lista
+import axios from "axios"; // Descomentar cuando la API esté lista
 import styles from "./Ventas.module.css";
 
 function Ventas() {
