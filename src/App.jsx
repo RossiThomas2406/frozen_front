@@ -7,6 +7,7 @@ import Fichaje from './pages/Fichajes/Fichaje'
 import Login from './pages/Login/Login'
 import GestionClientes from './pages/GestionClientes/GestionClientes'
 import Ventas from './pages/Ventas/Ventas'
+import CrearOrdenDeVenta from './pages/CrearOrdenDeVenta/CrearOrdenDeVenta'
 import './App.css'
 
 import ProtectedRoutes from './utils/ProtectedRoutes'
@@ -25,6 +26,7 @@ function App() {
                 <Route path="/fichaje" element={<Fichaje />} />
                 <Route path="/clientes" element={<GestionClientes />} />
                 <Route path="/ventas" element={<Ventas />} />
+                <Route path="/CrearOrdenVenta" element={<CrearOrdenDeVenta />} />
               </Route>
             </Routes>
         </main>
