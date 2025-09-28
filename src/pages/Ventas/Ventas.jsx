@@ -312,7 +312,7 @@ function Ventas() {
                     {orden.productos.map((producto, index) => (
                       <div key={index} className={styles.productoItem}>
                         <span className={styles.productoNombre}>
-                          {producto.nombre}
+                          {producto.producto.nombre}
                         </span>
                         <span className={styles.productoDetalle}>
                           <strong>{producto.cantidad}</strong> {producto.unidadMedida}
