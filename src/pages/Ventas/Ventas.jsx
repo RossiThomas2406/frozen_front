@@ -279,7 +279,7 @@ function Ventas() {
             const prioridadInfo = getPrioridadInfo(orden.prioridad);
             
             return (
-              <div key={orden.id} className={styles.ordenCard}>
+              <div key={orden.id_orden_venta} className={styles.ordenCard}>
                 <div className={styles.ordenHeader}>
                   <div>
                     <h2 className={styles.ordenId}>Orden #{orden.id_orden_venta}</h2>
@@ -312,10 +312,10 @@ function Ventas() {
                     {orden.productos.map((producto, index) => (
                       <div key={index} className={styles.productoItem}>
                         <span className={styles.productoNombre}>
-                          {producto.producto.nombre}
+                          {producto.producto.descripcion}
                         </span>
                         <span className={styles.productoDetalle}>
-                          <strong>{producto.cantidad}</strong> {producto.unidadMedida}
+                          <strong>{producto.cantidad}</strong> {producto.producto.unidad.descripcion}
                         </span>
                       </div>
                     ))}
