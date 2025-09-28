@@ -116,7 +116,7 @@ function Navbar() {
         {/* Logo de la empresa - Ahora usa navegación programática */}
         <div 
           className={styles.logoSection}
-          onClick={() => handleNavigation('/home')}
+          onClick={() => handleNavigation('/')}
           style={{cursor: 'pointer'}}
         >
           <div className={styles.logo}>F</div>
