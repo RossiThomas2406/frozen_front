@@ -72,14 +72,14 @@ function Ventas() {
   ];
 
   // IMPLEMENTACIÓN CON API AXIOS (COMENTADA - ACTIVAR CUANDO LA API ESTÉ LISTA)
-  /*
   const fetchOrdenesAPI = async () => {
     try {
       setLoading(true);
       setError(null);
       
       // NOTA: Cambiar la URL por el endpoint real de tu API
-      const response = await axios.get("/api/ordenes-venta/activas");
+      const response = await axios.get("https://frozenback-production.up.railway.app/api/ventas/ordenes-venta/");
+      console.log(response.data);
       
       // Asegurarnos de que siempre sea un array
       const ordenesData = response.data || [];
@@ -92,7 +92,6 @@ function Ventas() {
       setLoading(false);
     }
   };
-  */
 
   // IMPLEMENTACIÓN CON DATOS MOCK (ACTUALMENTE ACTIVA)
   const fetchOrdenesMock = async () => {
@@ -170,7 +169,7 @@ function Ventas() {
   // Función principal que decide qué implementación usar
   const fetchOrdenes = async () => {
     // Para cambiar a la API real, simplemente cambiar fetchOrdenesMock por fetchOrdenesAPI
-    await fetchOrdenesMock(); // ← CAMBIAR POR fetchOrdenesAPI CUANDO LA API ESTÉ LISTA
+    await fetchOrdenesAPI(); // ← CAMBIAR POR fetchOrdenesAPI CUANDO LA API ESTÉ LISTA
   };
 
   useEffect(() => {

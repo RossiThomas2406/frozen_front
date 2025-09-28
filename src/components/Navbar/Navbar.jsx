@@ -102,7 +102,7 @@ function Navbar() {
             style={{cursor: 'pointer', margin: '0 auto'}}
           >
             <div className={styles.logo}>P</div>
-            <span className={styles.logoText}>PYME</span>
+            <span className={styles.logoText}>Frozen</span>
           </div>
         </div>
       </nav>
@@ -119,8 +119,8 @@ function Navbar() {
           onClick={() => handleNavigation('/home')}
           style={{cursor: 'pointer'}}
         >
-          <div className={styles.logo}>P</div>
-          <span className={styles.logoText}>PYME</span>
+          <div className={styles.logo}>F</div>
+          <span className={styles.logoText}>Frozen</span>
         </div>
 
         {/* Información del usuario con menú desplegable */}
