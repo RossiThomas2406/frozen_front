@@ -17,11 +17,11 @@ function App() {
         <Navbar />
         <main className="main-content">
             <Routes>
+              <Route path="/fichaje" element={<Fichaje />} />
               <Route path="/" element={<Login />} />
+              <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
               <Route element={<ProtectedRoutes></ProtectedRoutes>}>
-                <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
                 <Route path="/home" element={<MenuPrincipal />} />
-                <Route path="/fichaje" element={<Fichaje />} />
                 <Route path="/ventas" element={<Ventas />} />
               </Route>
             </Routes>
