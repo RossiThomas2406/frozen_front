@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./CrearOrdenDeVenta.module.css";
 import { useState, useEffect } from "react";
-import FormularioProductos from "../../components/CrearOrdenDeVenta/FormularioProductos";
 
 function CrearOrdenDeVenta() {
 	const [clientes, setClientes] = useState([]);
@@ -86,23 +85,46 @@ function CrearOrdenDeVenta() {
 		);
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async  (event) => {
 		event.preventDefault();
 		//agregamos los productos al objeto orden sin el id
-		const productosConId = [...fields];
-		let productos = [];
-		productos = agregarSinId(productos, productosConId);
+		const productosConIdDinamico = [...fields];
+		let productos = agregarSinId( productosConIdDinamico);
 		const nuevaOrden = { ...orden, productos: productos };
-		console.log("Orden a enviar:", nuevaOrden);
+
+		try {
+			const response = await fetch("https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/crear/",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(nuevaOrden),
+				}
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("Orden de venta creada:", data);
+				// Reiniciar el formulario
+				setOrden({
+					id_cliente: 1,
+					prioridad: "",
+					fecha_entrega: "",
+					productos: [],
+				});
+				setFields([{ id: "1", id_producto: "", cantidad: 1 }]);
+			}
+		} catch (error) {
+			console.log(error)
+		}
 
 	};
 
-	function agregarSinId(arrayDestino, arrayOrigen) {
+	function agregarSinId(arrayOrigen) {
 		// Clonamos cada objeto de origen pero excluyendo la propiedad "id"
 		const sinId = arrayOrigen.map(({ id, ...resto }) => resto);
-		// Metemos ese nuevo array dentro del array destino
-		arrayDestino.push(sinId);
-		return arrayDestino;
+		return sinId;
 	}
 
 	if (loading) {
