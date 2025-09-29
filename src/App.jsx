@@ -10,8 +10,10 @@ import CrearOrdenDeVenta from './pages/CrearOrdenDeVenta/CrearOrdenDeVenta'
 import FormularioEmpleado from './pages/FormularioEmpleado/FormularioEmpleado'
 import './App.css'
 
+import ProtectedAuth from './utils/ProtectedAuth'
 import ProtectedRoutes from './utils/ProtectedRoutes'
 import ProtectedLogin from './utils/ProtectedLogin'
+
 function App() {
   return (
     <Router>
@@ -19,17 +21,24 @@ function App() {
         <Navbar />
         <main className="main-content">
             <Routes>
+              
               <Route path="/fichaje" element={<Fichaje />} />
+
               <Route element={<ProtectedLogin></ProtectedLogin>}>
                 <Route path="/" element={<Login />} />
               </Route>
-              <Route element={<ProtectedRoutes></ProtectedRoutes>}>
+
+              <Route element={<ProtectedAuth></ProtectedAuth>}>
                 <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
+              </Route>
+
+              <Route element={<ProtectedRoutes></ProtectedRoutes>}>
                 <Route path="/home" element={<MenuPrincipal />} />
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/CrearVenta" element={<CrearOrdenDeVenta />} />
                 <Route path="/AltaEmpleado" element={<FormularioEmpleado />} />
               </Route>
+
             </Routes>
         </main>
         <Footer />
