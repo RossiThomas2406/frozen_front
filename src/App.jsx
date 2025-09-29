@@ -7,6 +7,7 @@ import Fichaje from './pages/Fichajes/Fichaje'
 import Login from './pages/Login/Login'
 import Ventas from './pages/Ventas/Ventas'
 import CrearOrdenDeVenta from './pages/CrearOrdenDeVenta/CrearOrdenDeVenta'
+import FormularioEmpleado from './pages/FormularioEmpleado/FormularioEmpleado'
 import './App.css'
 
 import ProtectedRoutes from './utils/ProtectedRoutes'
@@ -24,7 +25,8 @@ function App() {
                 <Route path="/home" element={<MenuPrincipal />} />
                 <Route path="/fichaje" element={<Fichaje />} />
                 <Route path="/ventas" element={<Ventas />} />
-                <Route path="/CrearOrdenVenta" element={<CrearOrdenDeVenta />} />
+                <Route path="/CrearVenta" element={<CrearOrdenDeVenta />} />
+                <Route path="/AltaEmpleado" element={<FormularioEmpleado />} />
               </Route>
             </Routes>
         </main>
