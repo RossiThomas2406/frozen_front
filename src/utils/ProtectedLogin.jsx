@@ -1,21 +1,21 @@
 import { Outlet, Navigate } from "react-router-dom";
 
 
-const ProtectedRoutes = () => {
+const ProtectedLogin = () => {
     const userStr = localStorage.getItem('usuario');
     const user = userStr ? JSON.parse(userStr) : null;
 
-    if (user && user.autenticado === true) {
+    if (!user) {
         return <Outlet />;
     }
     
-    // Si no está autenticado pero existe usuario
+    // Si existe usuario pero no está autenticado
     if (user && user.autenticado === false) {
         return <Navigate to="/autenticacionFacial" replace />;
     }
     
-    // Si no hay usuario
-    return <Navigate to="/" replace />;
+    // Si existe usuario y está autenticado
+    return <Navigate to="/home" replace />;
 }
 
-export default ProtectedRoutes
+export default ProtectedLogin

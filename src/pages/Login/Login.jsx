@@ -35,6 +35,7 @@ const Login = () => {
       
       const usuarioData = {
         ...response.data,
+        autenticado: false,
         iniciales: iniciales
       };
       

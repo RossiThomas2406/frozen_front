@@ -169,17 +169,6 @@ function Ventas() {
     }));
   };
 
-  const handleClienteChange = (e) => {
-    const { value } = e.target;
-    setOrdenEditando(prev => ({
-      ...prev,
-      cliente: {
-        ...prev.cliente,
-        nombre: value
-      }
-    }));
-  };
-
   const handleProductoChange = (index, field, value) => {
     setOrdenEditando(prev => {
       const nuevosProductos = [...prev.productos];
@@ -331,42 +320,17 @@ function Ventas() {
             </div>
             
             <form onSubmit={handleSubmit} className={styles.form}>
+              
               <div className={styles.formGroup}>
-                <label>Cliente:</label>
+                <label>Fecha Entrega Estimada:</label>
                 <input
-                  type="text"
-                  name="nombreCliente"
-                  value={ordenEditando.cliente.nombre}
-                  onChange={handleClienteChange}
+                  type="date"
+                  name="fechaEntregaEstimada"
+                  value={formatFechaParaInput(ordenEditando.fechaEntregaEstimada)}
+                  onChange={handleInputChange}
                   className={styles.input}
                   required
                 />
-              </div>
-              
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Fecha Emisión:</label>
-                  <input
-                    type="date"
-                    name="fecha"
-                    value={formatFechaParaInput(ordenEditando.fecha)}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                    required
-                  />
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label>Fecha Entrega Estimada:</label>
-                  <input
-                    type="date"
-                    name="fechaEntregaEstimada"
-                    value={formatFechaParaInput(ordenEditando.fechaEntregaEstimada)}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                    required
-                  />
-                </div>
               </div>
               
               <div className={styles.formGroup}>

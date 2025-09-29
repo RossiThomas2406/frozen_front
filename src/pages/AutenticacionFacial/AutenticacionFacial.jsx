@@ -106,6 +106,16 @@ function AutenticacionFacial() {
                                 console.log("Usuario reconocido:", bestMatch.label);
                                 // Detener el intervalo y navegar
                                 clearInterval(intervalRef.current);
+                                
+                            const usuarioStr = localStorage.getItem('usuario');
+                            const usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+
+                            const newUsuarioData = {
+                                ...usuario,
+                                autenticado: true
+                            };
+                            localStorage.setItem('usuario', JSON.stringify(newUsuarioData));
+
                                 navigate('/home');
                             } else {
                                 console.log("Usuario no reconocido");
