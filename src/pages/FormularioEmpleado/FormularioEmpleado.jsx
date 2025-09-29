@@ -190,7 +190,7 @@ export default function FormularioEmpleado() {
 		if (username.length < 5) {
 			return "El username debe tener al menos 5 caracteres.";
 		}
-		if (username.length < 3 || username.length > 20) {
+		if (username.length < 5 || username.length > 20) {
 			return "El username debe tener entre 3 y 20 caracteres.";
 		}
 		if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
