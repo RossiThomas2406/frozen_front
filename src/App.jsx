@@ -9,7 +9,7 @@ import Ventas from './pages/Ventas/Ventas'
 import './App.css'
 
 import ProtectedRoutes from './utils/ProtectedRoutes'
-
+import ProtectedLogin from './utils/ProtectedLogin'
 function App() {
   return (
     <Router>
@@ -18,9 +18,11 @@ function App() {
         <main className="main-content">
             <Routes>
               <Route path="/fichaje" element={<Fichaje />} />
-              <Route path="/" element={<Login />} />
-              <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
+              <Route element={<ProtectedLogin></ProtectedLogin>}>
+                <Route path="/" element={<Login />} />
+              </Route>
               <Route element={<ProtectedRoutes></ProtectedRoutes>}>
+                <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
                 <Route path="/home" element={<MenuPrincipal />} />
                 <Route path="/ventas" element={<Ventas />} />
               </Route>
