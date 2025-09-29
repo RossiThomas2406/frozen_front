@@ -25,7 +25,7 @@ const Login = () => {
 
     try {
       // Hacer la petición al backend
-      const response = await axios.post('https://frozenback-production.up.railway.app/api/login/', {
+      const response = await axios.post('https://frozenback-test.up.railway.app/api/login/', {
         username,
         password,
       });

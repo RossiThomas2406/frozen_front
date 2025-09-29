@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./CrearOrdenDeVenta.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const clientesMock = [
 	{ id: 1, nombre: "Cliente A" },
@@ -16,13 +16,43 @@ const productosMock = [
 ];
 
 function CrearOrdenDeVenta() {
+	const [clientes, setClientes] = useState([]);
 	const [productos, setProductos] = useState([""]);
-	const [ordenDeVenta, setOrdenDeVenta] = useState({
-		clienteId: "",
-		FechaEntrega: "",
-		productos: productos,
-		total: 0,
+	const [HeaderOrdenDeVenta, setHeaderOrdenDeVenta] = useState({
+		id_cliente: 1,
+		id_estado_venta: 1,
+		fecha_entrega: "",
+		prioridad: "Alta",
 	});
+
+	
+	useEffect(() => {
+		const fetchApis = async () => {
+			const productos = await obtenerProductos();
+			const clientes = await obtenerClientes()
+
+			setProductos(productos)
+			setClientes(clientes)
+		};
+
+		fetchApis()
+	}, []);
+	
+	const obtenerProductos = async () => {
+		const response = await fetch(
+			"https://frozenback-test.up.railway.app/api/productos/productos/"
+		);
+		const productos = await response.json();
+		return productos;
+	};
+
+	const obtenerClientes = async () => {
+		const response = await fetch(
+			"https://frozenback-test.up.railway.app/api/ventas/clientes/"
+		);
+		const clientes = await response.json();
+		return clientes;
+	};
 
 	const agregarProducto = (producto) => {
 		setProductos([...productos, producto]);
@@ -59,10 +89,10 @@ function CrearOrdenDeVenta() {
 							type="date"
 							id="FechaEntrega"
 							name="FechaEntrega"
-							value={ordenDeVenta.FechaEntrega}
+							value={HeaderOrdenDeVenta.FechaEntrega}
 							onChange={(e) =>
-								setOrdenDeVenta({
-									...ordenDeVenta,
+								setHeaderOrdenDeVenta({
+									...HeaderOrdenDeVenta,
 									FechaEntrega: e.target.value,
 								})
 							}
@@ -71,10 +101,10 @@ function CrearOrdenDeVenta() {
 						<select
 							name="Prioridad"
 							id="Prioridad"
-							value={ordenDeVenta.Prioridad}
+							value={HeaderOrdenDeVenta.Prioridad}
 							onChange={(e) =>
-								setOrdenDeVenta({
-									...ordenDeVenta,
+								setHeaderOrdenDeVenta({
+									...HeaderOrdenDeVenta,
 									Prioridad: e.target.value,
 								})
 							}
@@ -92,23 +122,19 @@ function CrearOrdenDeVenta() {
 									<select
 										name="productos"
 										id="productos"
-										value={ordenDeVenta.productos[index]}
-                                        onChange={(e) =>
-                                            manejarCambioProductos(index, e.target.value)
-                                        }
-                                    >
-                                        {productosMock.map((producto) => (
-                                            <option key={producto.id} value={producto.id}>
-                                                {producto.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
-                                );
-                            })}
-
-
-
-                                
+										value={producto.id_producto}
+										onChange={(e) =>
+											manejarCambioProductos(index, e.target.value)
+										}
+									>
+										{productosMock.map((producto) => (
+											<option key={producto.id} value={producto.id}>
+												{producto.nombre}
+											</option>
+										))}
+									</select>
+								);
+							})}
 
 							<button type="button" onClick={agregarProducto}>
 								+ Agregar producto
