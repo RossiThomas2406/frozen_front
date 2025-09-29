@@ -72,7 +72,7 @@ function AutenticacionFacial() {
                 canvas.height = videoFeedEl.videoHeight;
                 canvas.width = videoFeedEl.videoWidth;
                 
-                const faceMatcher = new faceapi.FaceMatcher(vectoresUsuario, 0.4);
+                const faceMatcher = new faceapi.FaceMatcher(vectoresUsuario, 0.5);
                 
                 // Limpiar intervalo previo si existe
                 if (intervalRef.current) {
