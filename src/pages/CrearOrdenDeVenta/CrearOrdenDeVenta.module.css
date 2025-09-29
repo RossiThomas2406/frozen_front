@@ -6,13 +6,15 @@
 }
 
 .title {
+	justify-self: flex-start;
 	color: #2c3e50;
-	margin-bottom: 30px;
 	text-align: center;
 	display: flex;
-	align-items: center;
-	justify-content: center;
 	gap: 10px;
+	font-size: 2rem;
+	font-weight: bold;
+	color: #1f2937;
+	margin-top: 1rem;
 }
 
 .titleIcon {
@@ -47,7 +49,7 @@ select {
 	border-radius: 5px;
 	font-size: 14px;
 	box-sizing: border-box;
-    margin-top: 1rem;
+	margin-top: 1rem;
 }
 
 input:focus,
@@ -55,4 +57,12 @@ select:focus {
 	outline: none;
 	border-color: #29b6f6;
 	box-shadow: 0 0 0 2px rgba(41, 182, 246, 0.2);
+}
+
+
+@media (max-width: 768px) {
+	.title{
+		justify-self: center;
+
+	}
 }

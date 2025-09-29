@@ -1,6 +1,9 @@
 import React from "react";
 import styles from "./CrearOrdenDeVenta.module.css";
 import { useState, useEffect } from "react";
+import { MoonLoader } from "react-spinners";
+
+
 
 function CrearOrdenDeVenta() {
 	const [cantidadElementos, setCantidadElementos] = useState(1);
@@ -126,7 +129,7 @@ function CrearOrdenDeVenta() {
 			fecha_entrega: "",
 			productos: "",
 		});
-		
+
 		const nuevosErrores = {
 			cliente: "",
 			prioridad: "",
@@ -263,8 +266,7 @@ function CrearOrdenDeVenta() {
 			<div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200">
 				<div className="p-6">
 					<div className="flex items-center justify-center">
-						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-						<span className="ml-2 text-gray-600">Cargando productos...</span>
+						<MoonLoader color="#0a05ff" />
 					</div>
 				</div>
 			</div>
@@ -273,7 +275,6 @@ function CrearOrdenDeVenta() {
 	return (
 		<div className={styles.container}>
 			<h1 className={styles.title}>
-				<span className={styles.titleIcon}>🧩</span>
 				Crear Orden de Venta
 			</h1>
 			<div className="divFormulario">
