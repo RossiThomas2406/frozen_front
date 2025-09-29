@@ -152,8 +152,8 @@ export default function FormularioEmpleado() {
 		if (!form.usuario.trim()) newErrors.usuario = "El usuario es obligatorio";
 		if (!form.contrasena.trim()) {
 			newErrors.contrasena = "La contraseña es obligatoria";
-		} else if (form.contrasena.length < 6) {
-			newErrors.contrasena = "La contraseña debe tener al menos 6 caracteres";
+		} else if (form.contrasena.length < 7) {
+			newErrors.contrasena = "La contraseña debe tener al menos 8 caracteres";
 		}
 		return newErrors;
 	};
@@ -188,7 +188,7 @@ export default function FormularioEmpleado() {
 			// Si el status es 400 o cualquier error
 			if (!response.ok) {
 				const errorData = await response.json();
-				console.error("Error del backend:", errorData.message);
+				console.error("Error del backend:", errorData.error);
 				setErrors({ rostro: errorData.message || "Error en el servidor" });
 				return; // corta la ejecución
 			} else {
