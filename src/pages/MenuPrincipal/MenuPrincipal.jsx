@@ -18,7 +18,7 @@ function MenuPrincipal() {
       const usuarioData = localStorage.getItem('usuario');
       const parsedData = JSON.parse(usuarioData);
       const rolUsuario = parsedData.rol;
-      const response = await axios.get(`https://frozenback-production.up.railway.app/api/empleados/permisos-rol/${encodeURIComponent(rolUsuario)}`);
+      const response = await axios.get(`https://frozenback-test.up.railway.app/api/empleados/permisos-rol/${encodeURIComponent(rolUsuario)}`);
 
 
         
