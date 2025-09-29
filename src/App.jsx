@@ -35,6 +35,7 @@ function App() {
               <Route element={<ProtectedRoutes></ProtectedRoutes>}>
                 <Route path="/home" element={<MenuPrincipal />} />
                 <Route path="/ventas" element={<Ventas />} />
+                <Route path="/crearUsuario" element={<FormularioEmpleado />} />
                 <Route path="/CrearVenta" element={<CrearOrdenDeVenta />} />
                 <Route path="/AltaEmpleado" element={<FormularioEmpleado />} />
               </Route>
