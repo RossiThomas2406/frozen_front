@@ -20,7 +20,7 @@ export default function FormularioEmpleado() {
 	const [turnos, setTurnos] = useState([]);
 	const [errors, setErrors] = useState({});
 	const [successMessage, setSuccessMessage] = useState("");
-    const [faceVectors, setfaceVectors] = useState([])
+	const [faceVectors, setfaceVectors] = useState([]);
 	const [analizandoRostro, setAnalizandoRostro] = useState(false);
 	const videoRef = useRef(null);
 
@@ -104,7 +104,7 @@ export default function FormularioEmpleado() {
 	const traerDepartamentos = async () => {
 		try {
 			const response = await fetch(
-				"https://frozenback-production.up.railway.app/api/empleados/departamentos/"
+				"https://frozenback-test.up.railway.app/api/empleados/departamentos/"
 			);
 			const departamentos = await response.json();
 			return departamentos;
@@ -115,7 +115,7 @@ export default function FormularioEmpleado() {
 	const traerRoles = async () => {
 		try {
 			const response = await fetch(
-				"https://frozenback-production.up.railway.app/api/empleados/roles/"
+				"https://frozenback-test.up.railway.app/api/empleados/roles/"
 			);
 			const roles = await response.json();
 			return roles;
@@ -126,7 +126,7 @@ export default function FormularioEmpleado() {
 	const traerTurnos = async () => {
 		try {
 			const response = await fetch(
-				"https://frozenback-production.up.railway.app/api/empleados/turnos/"
+				"https://frozenback-test.up.railway.app/api/empleados/turnos/"
 			);
 			const turnos = await response.json();
 			return turnos;
@@ -146,17 +146,76 @@ export default function FormularioEmpleado() {
 
 	const validate = () => {
 		const newErrors = {};
-		if (!form.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
-		if (!form.apellido.trim())
-			newErrors.apellido = "El apellido es obligatorio";
-		if (!form.usuario.trim()) newErrors.usuario = "El usuario es obligatorio";
-		if (!form.contrasena.trim()) {
-			newErrors.contrasena = "La contraseña es obligatoria";
-		} else if (form.contrasena.length < 7) {
-			newErrors.contrasena = "La contraseña debe tener al menos 8 caracteres";
+
+		const passwordError = validarPassword(form.contrasena);
+		if (passwordError) {
+			newErrors.contrasena = passwordError;
 		}
+
+		const usernameError = validarUsername(form.usuario);
+		if (usernameError) {
+			newErrors.usuario = usernameError;
+		}
+
+		const nombreError = validarNombreYApellido(form.nombre);
+		if (nombreError) {
+			newErrors.nombre = nombreError;
+		}
+		const apellidoError = validarNombreYApellido(form.apellido);
+
+		if (apellidoError) {
+			newErrors.apellido = apellidoError;
+		}
+
 		return newErrors;
 	};
+
+	function validarPassword(password) {
+		if (password.length < 8) {
+			return "Debe tener al menos 8 caracteres.";
+		}
+		if (!/[A-Z]/.test(password)) {
+			return "Debe incluir al menos una letra mayúscula.";
+		}
+		if (!/[a-z]/.test(password)) {
+			return "Debe incluir al menos una letra minúscula.";
+		}
+		if (!/[!@#$%^&*()_\-+={}[\]|:;"'<>,.?/]/.test(password)) {
+			return "Debe incluir al menos un carácter especial.";
+		}
+		return null; // Si pasa todas las validaciones
+	}
+
+	function validarUsername(username) {
+		if (username.length < 5) {
+			return "El username debe tener al menos 5 caracteres.";
+		}
+		if (username.length < 3 || username.length > 20) {
+			return "El username debe tener entre 3 y 20 caracteres.";
+		}
+		if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+			return "El username solo puede contener letras, números, puntos, guiones bajos y guiones.";
+		}
+
+		return null;
+	}
+
+	function validarNombreYApellido(cadena) {
+		// 1. Quitar espacios iniciales/finales
+		const limpio = cadena.trim();
+
+		if (limpio.length < 2) {
+			return "Debe tener al menos 2 caracteres.";
+		}
+
+		if (limpio.length > 50) {
+			return "No puede superar los 50 caracteres.";
+		}
+		if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(limpio)) {
+			return "Solo puede contener letras y espacios.";
+		}
+		return null;
+	}
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -164,20 +223,20 @@ export default function FormularioEmpleado() {
 		if (Object.keys(validationErrors).length > 0) {
 			setErrors(validationErrors);
 		} else {
-			setErrors({});
-			if (!faceVectors) {
-				alert("Debe registrar el rostro antes de enviar.");
+			if (faceVectors.length == 0) {
+				setErrors({ ...errors, rostro: "Capture un rostro antes de enviar." });
 				return;
 			}
+			setErrors({});
 			await enviarDatosBackEnd();
 		}
 	};
 
 	const enviarDatosBackEnd = async () => {
 		try {
-            console.log(JSON.stringify({ ...form, vector: Array.from(faceVectors) }))
+			console.log(JSON.stringify({ ...form, vector: Array.from(faceVectors) }));
 			const response = await fetch(
-				"https://frozenback-production.up.railway.app/api/empleados/crear/",
+				"https://frozenback-test.up.railway.app/api/empleados/crear/",
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -288,13 +347,13 @@ export default function FormularioEmpleado() {
 								<input
 									type="password"
 									name="contrasena"
-									value={form.password}
+									value={form.contrasena}
 									onChange={handleChange}
 									className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
 									placeholder="Ingrese la contraseña"
 								/>
-								{errors.password && (
-									<p className="text-red-500 text-sm">{errors.password}</p>
+								{errors.contrasena && (
+									<p className="text-red-500 text-sm">{errors.contrasena}</p>
 								)}
 							</div>
 
@@ -333,7 +392,10 @@ export default function FormularioEmpleado() {
 								>
 									{departamentos.map((e) => {
 										return (
-											<option key={e.id_departamento} value={Number(e.id_departamento)}>
+											<option
+												key={e.id_departamento}
+												value={Number(e.id_departamento)}
+											>
 												{e.descripcion}
 											</option>
 										);

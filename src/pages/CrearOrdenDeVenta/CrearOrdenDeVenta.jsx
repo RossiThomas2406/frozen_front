@@ -309,38 +309,3 @@ function CrearOrdenDeVenta() {
 }
 
 export default CrearOrdenDeVenta;
-
-/*						<label htmlFor="productos">Productos:</label>
-						<div className={styles.productosContainer}>
-							{productosForm.map((producto, index) => {
-								return (
-									<React.Fragment key={index}>
-										<select key={index} name="productos" value={1}>
-											{productosFetch.map((productos) => (
-												<option
-													key={productos.id_producto}
-													value={productos.id_producto}
-												>
-													{productos.nombre}
-												</option>
-											))}
-										</select>
-
-										<input
-											type="number"
-											onChange={(e) => {
-												let value = e.target.value;
-												manejarCambioProductos(
-													Number(value),
-													producto.id_producto
-												);
-											}}
-										/>
-									</React.Fragment>
-								);
-							})}
-
-							<button type="button" onClick={agregarProducto}>
-								+ Agregar producto
-							</button>
-						</div> */
