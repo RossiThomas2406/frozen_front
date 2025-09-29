@@ -113,6 +113,7 @@ function Ventas() {
     try {
       return new Date(fechaString).toLocaleDateString('es-ES');
     } catch (error) {
+      console.log(error)
       return "Fecha inválida";
     }
   };
