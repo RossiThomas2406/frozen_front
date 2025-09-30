@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Navbar.module.css';
+import logo from '../../../public/favicon.png'; // Asegúrate de que la ruta sea correcta
 
 function Navbar() {
   // Obtener datos del usuario desde localStorage
@@ -101,7 +102,7 @@ function Navbar() {
             onClick={() => navigate('/')}
             style={{cursor: 'pointer', margin: '0 auto'}}
           >
-            <div className={styles.logo}>P</div>
+            <div className={styles.logo}><img src={logo} alt="logo" /></div>
             <span className={styles.logoText}>Frozen</span>
           </div>
         </div>
