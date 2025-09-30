@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Navbar.module.css';
-import logo from '../../../public/favicon.png'; // Asegúrate de que la ruta sea correcta
+import logo from '../../img/logo.png'; // Asegúrate de que la ruta sea correcta
 
 function Navbar() {
   // Obtener datos del usuario desde localStorage
