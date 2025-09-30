@@ -231,7 +231,6 @@ const Ventas = () => {
                           <div key={index} className={styles.productoItem}>
                             <div className={styles.productoInfo}>
                               <span className={styles.productoNombre}>{producto.producto}</span>
-                              <small>ID: {producto.id_producto}</small>
                             </div>
                             <div className={styles.productoCantidad}>
                               {producto.cantidad} {producto.unidad}

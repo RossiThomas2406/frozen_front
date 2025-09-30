@@ -120,7 +120,7 @@ function Navbar() {
           onClick={() => handleNavigation('/')}
           style={{cursor: 'pointer'}}
         >
-          <div className={styles.logo}>F</div>
+          <div className={styles.logo}><img src={logo} alt="logo" /></div>
           <span className={styles.logoText}>Frozen</span>
         </div>
 

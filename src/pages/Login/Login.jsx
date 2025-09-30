@@ -119,10 +119,11 @@ const Login = () => {
             {loading ? 'Verificando...' : 'Iniciar sesión'}
           </button>
         </form>
-        
+        {/* ..
         <div className={styles.footerLinks}>
           <a href="#" className={styles.link}>¿Olvidaste tu contraseña?</a>
         </div>
+        .. */}
       </div>
     </div>
   );
