@@ -3,15 +3,13 @@ import styles from "./CrearOrdenDeVenta.module.css";
 import { useState, useEffect } from "react";
 import { MoonLoader } from "react-spinners";
 
-
-
 function CrearOrdenDeVenta() {
 	const [cantidadElementos, setCantidadElementos] = useState(1);
 	const [clientes, setClientes] = useState([]);
 	const [products, setProducts] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [fields, setFields] = useState([
-		{ id: "1", id_producto: "", cantidad: 1 },
+		{ id: "1", id_producto: "", cantidad: 1 , unidad_medida: ""},
 	]);
 	const [orden, setOrden] = useState({
 		id_cliente: "",
@@ -30,6 +28,7 @@ function CrearOrdenDeVenta() {
 		const fetchApis = async () => {
 			const clientes = await obtenerClientes();
 			const productos = await obtenerProductos();
+			console.log(productos);
 
 			setProducts(productos);
 			setClientes(clientes);
@@ -101,7 +100,7 @@ function CrearOrdenDeVenta() {
 
 		setFields(
 			fields.map((field) =>
-				field.id === id ? { ...field, id_producto } : field
+				field.id === id ? { ...field, id_producto, unidad_medida: ""} : field
 			)
 		);
 
@@ -152,6 +151,7 @@ function CrearOrdenDeVenta() {
 		}
 
 		// Validar fecha de entrega (mínimo 3 días desde hoy)
+		
 		if (!orden.fecha_entrega) {
 			nuevosErrores.fecha_entrega = "Debes indicar una fecha de entrega";
 			esValido = false;
@@ -184,6 +184,12 @@ function CrearOrdenDeVenta() {
 			.filter((field) => field.id_producto !== "")
 			.map((field) => field.id_producto);
 		const productosUnicos = new Set(idsProductos);
+
+		//validar que no haya productos vacios
+		if (idsProductos.length !== fields.length) {
+			nuevosErrores.productos = "No puedes dejar productos sin seleccionar";
+			esValido = false;
+		}
 
 		if (idsProductos.length !== productosUnicos.size) {
 			nuevosErrores.productos =
@@ -261,6 +267,7 @@ function CrearOrdenDeVenta() {
 		);
 	};
 
+
 	if (loading) {
 		return (
 			<div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200">
@@ -274,9 +281,7 @@ function CrearOrdenDeVenta() {
 	}
 	return (
 		<div className={styles.container}>
-			<h1 className={styles.title}>
-				Crear Orden de Venta
-			</h1>
+			<h1 className={styles.title}>Crear Orden de Venta</h1>
 			<div className="divFormulario">
 				<form onSubmit={handleSubmit}>
 					<div className={styles.divFormulario}>
@@ -290,6 +295,9 @@ function CrearOrdenDeVenta() {
 								errors.cliente ? "border-red-500" : "border-gray-300"
 							}`}
 						>
+							<option value="" disabled selected hidden>
+								Seleccione una opción
+							</option>
 							{clientes.map((cliente) => (
 								<option key={cliente.id_cliente} value={cliente.id_cliente}>
 									{cliente.nombre}
@@ -333,6 +341,9 @@ function CrearOrdenDeVenta() {
 								errors.prioridad ? "border-red-500" : "border-gray-300"
 							}`}
 						>
+							<option value="" disabled selected hidden>
+								Seleccione una opción
+							</option>
 							<option value="Baja">Baja</option>
 							<option value="Normal">Normal</option>
 							<option value="Alta">Alta</option>
@@ -346,6 +357,7 @@ function CrearOrdenDeVenta() {
 						<div className="w-full  mx-auto bg-white rounded-lg ">
 							<div className="p-6">
 								{fields.map((field, index) => (
+									
 									<div
 										key={field.id}
 										className="p-4 border border-gray-300 rounded-lg bg-gray-50 mb-4"
@@ -393,7 +405,10 @@ function CrearOrdenDeVenta() {
 													}
 													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
 												>
-													<option value="">Selecciona un producto</option>
+													<option value="" disabled selected hidden>
+														{" "}
+														Seleccione una opción
+													</option>
 													{products.map((product) => (
 														<option
 															key={product.id_producto}
@@ -432,6 +447,7 @@ function CrearOrdenDeVenta() {
 													id={`cantidad-${field.id}`}
 													type="number"
 													min="1"
+													max="50"
 													value={field.cantidad}
 													onChange={(e) =>
 														updateQuantity(
@@ -442,6 +458,8 @@ function CrearOrdenDeVenta() {
 													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 												/>
 											</div>
+											<div className="space-y-2">
+											</div>	
 										</div>
 									</div>
 								))}
