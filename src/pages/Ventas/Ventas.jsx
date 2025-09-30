@@ -179,7 +179,6 @@ const Ventas = () => {
                       <div className={styles.productoInfoEdit}>
                         <span className={styles.productoNombre}>{producto.producto}</span>
                         <span className={styles.productoUnidad}>({producto.unidad})</span>
-                        <small>ID: {producto.id_producto}</small>
                       </div>
                       <div className={styles.controlesEdicion}>
                         <label>

@@ -24,7 +24,8 @@ function Navbar() {
       const parsedData = JSON.parse(usuarioData);
       setUser({
         name: `${parsedData.nombre} ${parsedData.apellido}`,
-        initials: parsedData.iniciales
+        initials: parsedData.iniciales,
+        role: parsedData.rol || parsedData.role || 'Usuario' // Asegurar compatibilidad con diferentes nombres de propiedad
       });
       setIsLoggedIn(true);
     } else {
@@ -133,9 +134,14 @@ function Navbar() {
           <div className={styles.userAvatar}>
             {user.initials}
           </div>
-          <span className={styles.userName}>
-            {user.name}
-          </span>
+          <div className={styles.userInfoContainer}>
+            <span className={styles.userName}>
+              {user.name}
+            </span>
+            <span className={styles.userRole}>
+              {user.role}
+            </span>
+          </div>
 
           {/* Menú desplegable de usuario */}
           {isUserMenuOpen && (
@@ -144,6 +150,7 @@ function Navbar() {
                 <div className={styles.userInfoAvatar}>{user.initials}</div>
                 <div className={styles.userInfoDetails}>
                   <div className={styles.userInfoName}>{user.name}</div>
+                  <div className={styles.userInfoRole}>{user.role}</div>
                   {user.email && (
                     <div className={styles.userInfoEmail}>{user.email}</div>
                   )}
