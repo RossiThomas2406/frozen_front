@@ -16,7 +16,7 @@ const Fichaje = () => {
   const [empleadoInfo, setEmpleadoInfo] = useState(null);
   const [recognitionStarted, setRecognitionStarted] = useState(false);
 
-  const BACKEND_URL = "http://localhost:4000/ficharEmpleadoPorRostro";
+  const BACKEND_URL = "https://frozenback-test.up.railway.app/api/fichaje/";
 
   useEffect(() => {
     // Solo cargar los modelos de FaceAPI al inicio
