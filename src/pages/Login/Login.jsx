@@ -75,7 +75,7 @@ const Login = () => {
       <div className={styles.loginCard}>
         <div className={styles.logoSection}>
           <h1 className={styles.logo}>Frozen</h1>
-          <p className={styles.tagline}>Sistema de Getion PyME</p>
+          <p className={styles.tagline}>Sistema de Gestión PyME</p>
         </div>
         
         <form className={styles.loginForm} onSubmit={handleSubmit}>
