@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import styles from './CrearOrdenProduccion.module.css';
 
 const CrearOrdenProduccion = () => {
@@ -7,59 +8,109 @@ const CrearOrdenProduccion = () => {
     startDate: '',
     product: '',
     quantity: '',
-    expiryDate: '',
-    productionLine: '',
-    supervisor: '',
-    endDate: '',
-    instructions: '',
-    qualityNotes: ''
+    productionLine: ''
   });
 
   const [alert, setAlert] = useState({ message: '', type: '', visible: false });
   const [productOptions, setProductOptions] = useState([]);
+  const [productionLineOptions, setProductionLineOptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [responsable, setResponsable] = useState('');
+  const [idUsuario, setIdUsuario] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const productionLineOptions = [
-    { value: 'linea-1', label: 'Línea 1 - Pizzas' },
-    { value: 'linea-2', label: 'Línea 2 - Empanadas' },
-    { value: 'linea-3', label: 'Línea 3 - Pastas' },
-    { value: 'linea-4', label: 'Línea 4 - Croquetas' }
-  ];
-
-  // Efecto para cargar productos desde la API
+  // Efecto para cargar productos y líneas de producción desde la API
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://frozenback-test.up.railway.app/api/productos/tipos-producto/');
-        if (!response.ok) {
-          throw new Error('Error al cargar los productos');
-        }
-        const products = await response.json();
         
-        // Transformar los datos de la API al formato que necesita el componente
-        const transformedProducts = products.map(product => ({
+        // Realizar ambas peticiones en paralelo
+        const [productosResponse, lineasResponse] = await Promise.all([
+          axios.get('https://frozenback-test.up.railway.app/api/productos/tipos-producto/'),
+          axios.get('https://frozenback-test.up.railway.app/api/produccion/lineas/')
+        ]);
+
+        // Procesar productos
+        const productsArray = productosResponse.data.results;
+        if (!Array.isArray(productsArray)) {
+          throw new Error('La respuesta de productos no contiene un formato válido');
+        }
+        
+        const transformedProducts = productsArray.map(product => ({
           value: product.id_tipo_producto.toString(),
           label: product.descripcion
         }));
         
+        if (transformedProducts.length === 0) {
+          throw new Error('No se encontraron productos');
+        }
+        
         setProductOptions(transformedProducts);
+
+        // Procesar líneas de producción
+        const lineasArray = lineasResponse.data.results;
+        if (!Array.isArray(lineasArray)) {
+          throw new Error('La respuesta de líneas de producción no contiene un formato válido');
+        }
+        
+        const transformedLineas = lineasArray.map(linea => ({
+          value: linea.id_linea_produccion.toString(),
+          label: linea.descripcion
+        }));
+        
+        if (transformedLineas.length === 0) {
+          throw new Error('No se encontraron líneas de producción');
+        }
+        
+        setProductionLineOptions(transformedLineas);
+        
       } catch (error) {
-        console.error('Error fetching products:', error);
-        showAlert('Error al cargar los productos: ' + error.message, 'error');
+        console.error('Error fetching data:', error);
+        const errorMessage = error.response?.data?.message || error.message;
+        showAlert('Error al cargar los datos: ' + errorMessage, 'error');
+        
+        // Establecer arrays vacíos en caso de error
+        if (error.message.includes('productos')) {
+          setProductOptions([]);
+        } else if (error.message.includes('líneas')) {
+          setProductionLineOptions([]);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    // Inicializar fecha y cargar productos
+    // Obtener responsable e id_usuario del localStorage
+    const obtenerUsuario = () => {
+      try {
+        const usuarioStorage = localStorage.getItem('usuario');
+        if (usuarioStorage) {
+          const usuario = JSON.parse(usuarioStorage);
+          if (usuario.nombre && usuario.apellido) {
+            setResponsable(`${usuario.nombre} ${usuario.apellido}`);
+          }
+          if (usuario.id_usuario) {
+            setIdUsuario(usuario.id_usuario.toString());
+          } else if (usuario.id) {
+            setIdUsuario(usuario.id.toString());
+          }
+        }
+      } catch (error) {
+        console.error('Error al obtener datos del usuario:', error);
+        setResponsable('Usuario no identificado');
+      }
+    };
+
+    // Inicializar fecha
     const today = new Date().toISOString().split('T')[0];
     setFormData(prev => ({
       ...prev,
       startDate: today
     }));
 
-    fetchProducts();
+    obtenerUsuario();
+    fetchData();
   }, []);
 
   // Manejar cambios en los inputs
@@ -79,23 +130,66 @@ const CrearOrdenProduccion = () => {
     }, 5000);
   };
 
+  // Función para enviar datos a la API
+  const enviarOrdenProduccion = async (ordenData) => {
+    try {
+      const response = await axios.post('https://frozenback-test.up.railway.app/api/ordenes-produccion/', ordenData);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      throw new Error(errorMessage);
+    }
+  };
+
   // Manejar envío del formulario
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
 
     // Validaciones básicas
     if (!formData.product || !formData.quantity || !formData.productionLine) {
       showAlert('Por favor, completa todos los campos obligatorios.', 'error');
+      setSubmitting(false);
       return;
     }
 
-    // Simular envío exitoso
-    showAlert('¡Orden de producción creada exitosamente!', 'success');
+    // Validar que tenemos el id_usuario
+    if (!idUsuario) {
+      showAlert('No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.', 'error');
+      setSubmitting(false);
+      return;
+    }
 
-    // Resetear formulario después de enviar
-    setTimeout(() => {
-      resetForm();
-    }, 2000);
+    try {
+      // Preparar datos para enviar
+      const ordenData = {
+        id_usuario: parseInt(idUsuario),
+        id_tipo_producto: parseInt(formData.product),
+        cantidad: parseInt(formData.quantity),
+        id_linea_produccion: parseInt(formData.productionLine),
+        fecha_inicio_planificada: formData.startDate,
+        fecha_creacion: new Date().toISOString().split('T')[0],
+        estado: 'pendiente'
+      };
+
+      console.log('Datos a enviar:', ordenData); // Para debugging
+
+      // Enviar a la API
+      const resultado = await enviarOrdenProduccion(ordenData);
+      
+      showAlert('¡Orden de producción creada exitosamente!', 'success');
+      
+      // Resetear formulario después de enviar
+      setTimeout(() => {
+        resetForm();
+        setSubmitting(false);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error al crear orden:', error);
+      showAlert(`Error al crear la orden: ${error.message}`, 'error');
+      setSubmitting(false);
+    }
   };
 
   // Resetear formulario
@@ -106,12 +200,7 @@ const CrearOrdenProduccion = () => {
       startDate: today,
       product: '',
       quantity: '',
-      expiryDate: '',
-      productionLine: '',
-      supervisor: '',
-      endDate: '',
-      instructions: '',
-      qualityNotes: ''
+      productionLine: ''
     });
   };
 
@@ -147,6 +236,20 @@ const CrearOrdenProduccion = () => {
             <div className={styles.formSection}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
+                  <label htmlFor="responsable">
+                    Responsable
+                  </label>
+                  <input
+                    type="text"
+                    id="responsable"
+                    value={responsable}
+                    disabled
+                    className={styles.disabledInput}
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
                   <label htmlFor="product" className={styles.required}>
                     Producto
                   </label>
@@ -156,14 +259,22 @@ const CrearOrdenProduccion = () => {
                     value={formData.product}
                     onChange={handleInputChange}
                     required
+                    disabled={submitting || productOptions.length === 0}
                   >
-                    <option value="">Seleccionar producto</option>
+                    <option value="">
+                      {productOptions.length === 0 ? 'No hay productos disponibles' : 'Seleccionar producto'}
+                    </option>
                     {productOptions.map(option => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  {productOptions.length === 0 && !loading && (
+                    <small className={styles.errorText}>
+                      No se pudieron cargar los productos.
+                    </small>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="quantity" className={styles.required}>
@@ -177,6 +288,7 @@ const CrearOrdenProduccion = () => {
                     onChange={handleInputChange}
                     min="1"
                     required
+                    disabled={submitting}
                   />
                 </div>
               </div>
@@ -191,14 +303,22 @@ const CrearOrdenProduccion = () => {
                     value={formData.productionLine}
                     onChange={handleInputChange}
                     required
+                    disabled={submitting || productionLineOptions.length === 0}
                   >
-                    <option value="">Seleccionar línea</option>
+                    <option value="">
+                      {productionLineOptions.length === 0 ? 'No hay líneas disponibles' : 'Seleccionar línea'}
+                    </option>
                     {productionLineOptions.map(option => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  {productionLineOptions.length === 0 && !loading && (
+                    <small className={styles.errorText}>
+                      No se pudieron cargar las líneas de producción.
+                    </small>
+                  )}
                 </div>
               </div>
               <div className={styles.formRow}>
@@ -213,6 +333,7 @@ const CrearOrdenProduccion = () => {
                     value={formData.startDate}
                     onChange={handleInputChange}
                     required
+                    disabled={submitting}
                   />
                 </div>
               </div>
@@ -224,14 +345,23 @@ const CrearOrdenProduccion = () => {
                 type="button" 
                 onClick={handleCancel}
                 className={`${styles.btn} ${styles.btnSecondary}`}
+                disabled={submitting}
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
                 className={`${styles.btn} ${styles.btnPrimary}`}
+                disabled={submitting || productOptions.length === 0 || productionLineOptions.length === 0 || !idUsuario}
               >
-                Crear
+                {submitting ? (
+                  <>
+                    <div className={styles.submitLoader}></div>
+                    Creando...
+                  </>
+                ) : (
+                  'Crear'
+                )}
               </button>
             </div>
           </form>

@@ -30,8 +30,8 @@ function CrearOrdenDeVenta() {
 			const productos = await obtenerProductos();
 			console.log(productos);
 
-			setProducts(productos);
-			setClientes(clientes);
+			setProducts(productos.results);
+			setClientes(clientes.results);
 			setLoading(false);
 		};
 

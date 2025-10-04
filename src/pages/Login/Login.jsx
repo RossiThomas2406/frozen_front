@@ -29,7 +29,7 @@ const Login = () => {
         username,
         password,
       });
-
+      
       // Guardar los datos del usuario e iniciales en localStorage
       const iniciales = obtenerIniciales(response.data.nombre, response.data.apellido);
       
