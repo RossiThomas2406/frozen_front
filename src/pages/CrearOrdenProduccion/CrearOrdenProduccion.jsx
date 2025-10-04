@@ -90,10 +90,8 @@ const CrearOrdenProduccion = () => {
           if (usuario.nombre && usuario.apellido) {
             setResponsable(`${usuario.nombre} ${usuario.apellido}`);
           }
-          if (usuario.id_usuario) {
-            setIdUsuario(usuario.id_usuario.toString());
-          } else if (usuario.id) {
-            setIdUsuario(usuario.id.toString());
+          if (usuario.id_empleado) {
+            setIdUsuario(usuario.id_empleado.toString());
           }
         }
       } catch (error) {
