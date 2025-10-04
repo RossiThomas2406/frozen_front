@@ -6,7 +6,7 @@ function Footer() {
   return (
     <footer className={styles.footer}>
         <p className={styles.copyright}>
-          © {currentYear} PYMEAPP. Todos los derechos reservados.
+          © {currentYear} FROZENAPP. Todos los derechos reservados.
         </p>
     </footer>
   );
