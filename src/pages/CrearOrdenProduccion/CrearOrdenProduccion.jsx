@@ -18,6 +18,7 @@ const CrearOrdenProduccion = () => {
   const [responsable, setResponsable] = useState('');
   const [idUsuario, setIdUsuario] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedProductUnit, setSelectedProductUnit] = useState('');
 
   // Efecto para cargar productos y líneas de producción desde la API
   useEffect(() => {
@@ -27,7 +28,7 @@ const CrearOrdenProduccion = () => {
         
         // Realizar ambas peticiones en paralelo
         const [productosResponse, lineasResponse] = await Promise.all([
-          axios.get('https://frozenback-test.up.railway.app/api/productos/tipos-producto/'),
+          axios.get('https://frozenback-test.up.railway.app/api/productos/listar/'),
           axios.get('https://frozenback-test.up.railway.app/api/produccion/lineas/')
         ]);
 
@@ -38,8 +39,10 @@ const CrearOrdenProduccion = () => {
         }
         
         const transformedProducts = productsArray.map(product => ({
-          value: product.id_tipo_producto.toString(),
-          label: product.descripcion
+          value: product.id_producto.toString(),
+          label: product.nombre,
+          descripcion: product.descripcion,
+          unidad_medida: product.unidad_medida
         }));
         
         if (transformedProducts.length === 0) {
@@ -114,6 +117,13 @@ const CrearOrdenProduccion = () => {
   // Manejar cambios en los inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'product') {
+      // Encontrar el producto seleccionado para obtener su unidad de medida
+      const selectedProduct = productOptions.find(product => product.value === value);
+      setSelectedProductUnit(selectedProduct ? selectedProduct.unidad_medida : '');
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -165,9 +175,7 @@ const CrearOrdenProduccion = () => {
         id_tipo_producto: parseInt(formData.product),
         cantidad: parseInt(formData.quantity),
         id_linea_produccion: parseInt(formData.productionLine),
-        fecha_inicio_planificada: formData.startDate,
-        fecha_creacion: new Date().toISOString().split('T')[0],
-        estado: 'pendiente'
+        fecha_inicio_planificada: formData.startDate
       };
 
       console.log('Datos a enviar:', ordenData); // Para debugging
@@ -200,6 +208,7 @@ const CrearOrdenProduccion = () => {
       quantity: '',
       productionLine: ''
     });
+    setSelectedProductUnit('');
   };
 
   // Manejar cancelación
@@ -264,7 +273,7 @@ const CrearOrdenProduccion = () => {
                     </option>
                     {productOptions.map(option => (
                       <option key={option.value} value={option.value}>
-                        {option.label}
+                        {option.label} - {option.descripcion}
                       </option>
                     ))}
                   </select>
@@ -276,7 +285,7 @@ const CrearOrdenProduccion = () => {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="quantity" className={styles.required}>
-                    Cantidad
+                    Cantidad ({selectedProductUnit || 'Unidades'})
                   </label>
                   <input
                     type="number"
@@ -287,6 +296,7 @@ const CrearOrdenProduccion = () => {
                     min="1"
                     required
                     disabled={submitting}
+                    placeholder={`Ingrese la cantidad en ${selectedProductUnit || 'unidades'}`}
                   />
                 </div>
               </div>
