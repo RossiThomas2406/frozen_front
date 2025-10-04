@@ -285,7 +285,7 @@ const CrearOrdenProduccion = () => {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="quantity" className={styles.required}>
-                    Cantidad ({selectedProductUnit || 'Unidades'})
+                    Cantidad{selectedProductUnit && ` (${selectedProductUnit})`}
                   </label>
                   <input
                     type="number"
@@ -296,7 +296,7 @@ const CrearOrdenProduccion = () => {
                     min="1"
                     required
                     disabled={submitting}
-                    placeholder={`Ingrese la cantidad en ${selectedProductUnit || 'unidades'}`}
+                    placeholder={selectedProductUnit ? `Ingrese la cantidad en ${selectedProductUnit}` : 'Ingrese la cantidad'}
                   />
                 </div>
               </div>
