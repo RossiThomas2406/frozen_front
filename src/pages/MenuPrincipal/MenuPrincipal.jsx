@@ -63,12 +63,9 @@ function MenuPrincipal() {
     <div className={styles.home}>
       <div className={styles.content}>
         {data.map(item => (
-          <div key={item.id_permiso} className={styles.card}>
+          <div key={item.id_permiso} onClick={() => navigate(item.link)} className={styles.card}>
             <h3 className={styles.cardTitle}>{item.titulo}</h3>
             <p className={styles.cardDescription}>{item.descripcion}</p>
-            <button onClick={() => navigate(item.link)} className={styles.cardButton}>
-              Ver Detalles
-            </button>
           </div>
         ))}
       </div>

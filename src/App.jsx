@@ -7,6 +7,7 @@ import Fichaje from './pages/Fichajes/Fichaje'
 import Login from './pages/Login/Login'
 import Ventas from './pages/Ventas/Ventas'
 import CrearOrdenDeVenta from './pages/CrearOrdenDeVenta/CrearOrdenDeVenta'
+import CrearOrdenProduccion from './pages/CrearOrdenProduccion/CrearOrdenProduccion'
 import FormularioEmpleado from './pages/FormularioEmpleado/FormularioEmpleado'
 import './App.css'
 
@@ -32,13 +33,14 @@ function App() {
                 <Route path="/autenticacionFacial" element={<AutenticacionFacial />} />
               </Route>
 
-              <Route element={<ProtectedRoutes></ProtectedRoutes>}>
+             {/* <Route element={<ProtectedRoutes></ProtectedRoutes>}>*/}
                 <Route path="/home" element={<MenuPrincipal />} />
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/crearUsuario" element={<FormularioEmpleado />} />
                 <Route path="/CrearVenta" element={<CrearOrdenDeVenta />} />
                 <Route path="/AltaEmpleado" element={<FormularioEmpleado />} />
-              </Route>
+                <Route path="/crearOrdenProduccion" element={<CrearOrdenProduccion />} />
+              {/*</Route>*/}
 
             </Routes>
         </main>
