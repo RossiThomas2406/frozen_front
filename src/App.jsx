@@ -9,6 +9,7 @@ import Ventas from './pages/Ventas/Ventas'
 import CrearOrdenDeVenta from './pages/CrearOrdenDeVenta/CrearOrdenDeVenta'
 import CrearOrdenProduccion from './pages/CrearOrdenProduccion/CrearOrdenProduccion'
 import FormularioEmpleado from './pages/FormularioEmpleado/FormularioEmpleado'
+import VerOrdenesProduccion from './pages/VerOrdenesProduccion/VerOrdenesProduccion'
 import './App.css'
 
 import ProtectedAuth from './utils/ProtectedAuth'
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/CrearVenta" element={<CrearOrdenDeVenta />} />
                 <Route path="/AltaEmpleado" element={<FormularioEmpleado />} />
                 <Route path="/crearOrdenProduccion" element={<CrearOrdenProduccion />} />
+                <Route path="/verOrdenesProduccion" element={<VerOrdenesProduccion />} />
               {/*</Route>*/}
 
             </Routes>
