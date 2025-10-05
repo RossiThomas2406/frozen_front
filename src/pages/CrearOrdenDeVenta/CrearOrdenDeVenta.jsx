@@ -1,19 +1,27 @@
 import React from "react";
+import axios from "axios";
 import styles from "./CrearOrdenDeVenta.module.css";
 import { useState, useEffect } from "react";
 import { MoonLoader } from "react-spinners";
+
+// Configuración base de axios
+const api = axios.create({
+  baseURL: "https://frozenback-test.up.railway.app/api",
+  timeout: 10000,
+});
 
 function CrearOrdenDeVenta() {
 	const [cantidadElementos, setCantidadElementos] = useState(1);
 	const [clientes, setClientes] = useState([]);
 	const [products, setProducts] = useState([]);
+	const [prioridades, setPrioridades] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [fields, setFields] = useState([
-		{ id: "1", id_producto: "", cantidad: 1 , unidad_medida: ""},
+		{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "" },
 	]);
 	const [orden, setOrden] = useState({
 		id_cliente: "",
-		prioridad: "",
+		id_prioridad: "",
 		fecha_entrega: "",
 		productos: [],
 	});
@@ -26,32 +34,36 @@ function CrearOrdenDeVenta() {
 
 	useEffect(() => {
 		const fetchApis = async () => {
-			const clientes = await obtenerClientes();
-			const productos = await obtenerProductos();
-			console.log(productos);
+			try {
+				const [clientesResponse, productosResponse, prioridadesResponse] = await Promise.all([
+					obtenerClientes(),
+					obtenerProductos(),
+					obtenerPrioridades()
+				]);
 
-			setProducts(productos.results);
-			setClientes(clientes.results);
-			setLoading(false);
+				setProducts(productosResponse.data.results);
+				setClientes(clientesResponse.data.results);
+				setPrioridades(prioridadesResponse.data.results);
+				setLoading(false);
+			} catch (error) {
+				console.error("Error cargando datos:", error);
+				setLoading(false);
+			}
 		};
 
 		fetchApis();
 	}, []);
 
 	const obtenerProductos = async () => {
-		const response = await fetch(
-			"https://frozenback-test.up.railway.app/api/productos/productos/"
-		);
-		const productos = await response.json();
-		return productos;
+		return await api.get("/productos/listar/");
 	};
 
 	const obtenerClientes = async () => {
-		const response = await fetch(
-			"https://frozenback-test.up.railway.app/api/ventas/clientes/"
-		);
-		const clientes = await response.json();
-		return clientes;
+		return await api.get("/ventas/clientes/");
+	};
+
+	const obtenerPrioridades = async () => {
+		return await api.get("/ventas/prioridades/");
 	};
 
 	const handleChange = (e) => {
@@ -74,6 +86,7 @@ function CrearOrdenDeVenta() {
 			id: Date.now().toString(),
 			id_producto: "",
 			cantidad: 1,
+			unidad_medida: "",
 		};
 		setFields([...fields, newField]);
 	};
@@ -86,7 +99,6 @@ function CrearOrdenDeVenta() {
 	};
 
 	const updateProduct = (id, id_producto) => {
-		// Verificar si el producto ya está seleccionado en otro campo
 		const productoYaSeleccionado = fields.some(
 			(field) => field.id !== id && field.id_producto === id_producto
 		);
@@ -98,9 +110,17 @@ function CrearOrdenDeVenta() {
 			return;
 		}
 
+		// Encontrar el producto seleccionado para obtener su unidad de medida
+		const productoSeleccionado = products.find(product => product.id_producto === parseInt(id_producto));
+		const unidadMedida = productoSeleccionado ? productoSeleccionado.unidad_medida : "";
+
 		setFields(
 			fields.map((field) =>
-				field.id === id ? { ...field, id_producto, unidad_medida: ""} : field
+				field.id === id ? { 
+					...field, 
+					id_producto, 
+					unidad_medida: unidadMedida 
+				} : field
 			)
 		);
 
@@ -145,13 +165,12 @@ function CrearOrdenDeVenta() {
 		}
 
 		// Validar prioridad
-		if (!orden.prioridad || orden.prioridad === "") {
+		if (!orden.id_prioridad || orden.id_prioridad === "") {
 			nuevosErrores.prioridad = "Debes seleccionar una prioridad";
 			esValido = false;
 		}
 
-		// Validar fecha de entrega (mínimo 3 días desde hoy)
-		
+		// Validar fecha de entrega
 		if (!orden.fecha_entrega) {
 			nuevosErrores.fecha_entrega = "Debes indicar una fecha de entrega";
 			esValido = false;
@@ -170,7 +189,7 @@ function CrearOrdenDeVenta() {
 			}
 		}
 
-		// Validar que haya al menos un producto seleccionado
+		// Validar productos
 		const productosSeleccionados = fields.filter(
 			(field) => field.id_producto !== ""
 		);
@@ -179,13 +198,11 @@ function CrearOrdenDeVenta() {
 			esValido = false;
 		}
 
-		// Validar que no haya productos duplicados
 		const idsProductos = fields
 			.filter((field) => field.id_producto !== "")
 			.map((field) => field.id_producto);
 		const productosUnicos = new Set(idsProductos);
 
-		//validar que no haya productos vacios
 		if (idsProductos.length !== fields.length) {
 			nuevosErrores.productos = "No puedes dejar productos sin seleccionar";
 			esValido = false;
@@ -200,41 +217,30 @@ function CrearOrdenDeVenta() {
 		setErrors(nuevosErrores);
 		return esValido;
 	};
-	/*VALIDACIONES */
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		//agregamos los productos al objeto orden sin el id
 		const productosConIdDinamico = [...fields];
 		let productos = agregarSinId(productosConIdDinamico);
 		const nuevaOrden = { ...orden, productos: productos };
+		
 		if (!validarFormulario()) {
-			// Si el formulario no es válido, detener el envío
 			return;
 		}
+		
 		try {
-			const response = await fetch(
-				"https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/crear/",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(nuevaOrden),
-				}
-			);
+			const response = await api.post("/ventas/ordenes-venta/crear/", nuevaOrden);
 
-			if (response.ok) {
-				const data = await response.json();
-				console.log("Orden de venta creada:", data);
+			if (response.status === 200 || response.status === 201) {
+				console.log("Orden de venta creada:", response.data);
 				// Reiniciar el formulario
 				setOrden({
-					id_cliente: 1,
-					prioridad: "",
+					id_cliente: "",
+					id_prioridad: "",
 					fecha_entrega: "",
 					productos: [],
 				});
-				setFields([{ id: "1", id_producto: "", cantidad: 1 }]);
+				setFields([{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "" }]);
 				setErrors({
 					cliente: "",
 					prioridad: "",
@@ -244,12 +250,22 @@ function CrearOrdenDeVenta() {
 				alert("Orden de venta creada exitosamente");
 			}
 		} catch (error) {
-			console.log(error);
+			console.error("Error al crear orden:", error);
+			if (error.response) {
+				// El servidor respondió con un código de error
+				console.error("Detalles del error:", error.response.data);
+				alert(`Error al crear la orden: ${error.response.status} - ${error.response.data.message || 'Error del servidor'}`);
+			} else if (error.request) {
+				// La petición fue hecha pero no se recibió respuesta
+				alert("Error de conexión: No se pudo contactar al servidor");
+			} else {
+				// Algo pasó en la configuración de la petición
+				alert("Error inesperado al crear la orden");
+			}
 		}
 	};
 
 	function agregarSinId(arrayOrigen) {
-		// Clonamos cada objeto de origen pero excluyendo la propiedad "id"
 		const sinId = arrayOrigen.map(({ id, ...resto }) => resto);
 		return sinId;
 	}
@@ -267,6 +283,11 @@ function CrearOrdenDeVenta() {
 		);
 	};
 
+	// Función para obtener la unidad de medida de un producto
+	const obtenerUnidadMedida = (id_producto) => {
+		const producto = products.find(p => p.id_producto === parseInt(id_producto));
+		return producto ? producto.unidad_medida : "";
+	};
 
 	if (loading) {
 		return (
@@ -279,12 +300,14 @@ function CrearOrdenDeVenta() {
 			</div>
 		);
 	}
+
 	return (
 		<div className={styles.container}>
 			<h1 className={styles.title}>Crear Orden de Venta</h1>
 			<div className="divFormulario">
 				<form onSubmit={handleSubmit}>
 					<div className={styles.divFormulario}>
+						{/* Cliente */}
 						<label htmlFor="Cliente">Cliente:</label>
 						<select
 							name="id_cliente"
@@ -295,7 +318,7 @@ function CrearOrdenDeVenta() {
 								errors.cliente ? "border-red-500" : "border-gray-300"
 							}`}
 						>
-							<option value="" disabled selected hidden>
+							<option value="" disabled hidden>
 								Seleccione una opción
 							</option>
 							{clientes.map((cliente) => (
@@ -309,6 +332,8 @@ function CrearOrdenDeVenta() {
 								{errors.cliente}
 							</span>
 						)}
+
+						{/* Fecha de Entrega */}
 						<label htmlFor="FechaEntrega">Fecha de Entrega Estimada:</label>
 						<input
 							type="date"
@@ -331,33 +356,37 @@ function CrearOrdenDeVenta() {
 								{errors.fecha_entrega}
 							</span>
 						)}
+
+						{/* Prioridad - Ahora desde la API */}
 						<label htmlFor="Prioridad">Prioridad:</label>
 						<select
-							name="prioridad"
+							name="id_prioridad"
 							id="Prioridad"
-							value={orden.prioridad}
+							value={orden.id_prioridad}
 							onChange={handleChange}
 							className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
 								errors.prioridad ? "border-red-500" : "border-gray-300"
 							}`}
 						>
-							<option value="" disabled selected hidden>
+							<option value="" disabled hidden>
 								Seleccione una opción
 							</option>
-							<option value="Baja">Baja</option>
-							<option value="Normal">Normal</option>
-							<option value="Alta">Alta</option>
-							<option value="Urgente">Urgente</option>
+							{prioridades.map((prioridad) => (
+								<option key={prioridad.id_prioridad} value={prioridad.id_prioridad}>
+									{prioridad.descripcion}
+								</option>
+							))}
 						</select>
 						{errors.prioridad && (
 							<span className="text-red-500 text-sm mt-1 block">
 								{errors.prioridad}
 							</span>
 						)}
-						<div className="w-full  mx-auto bg-white rounded-lg ">
+
+						{/* Productos */}
+						<div className="w-full mx-auto bg-white rounded-lg">
 							<div className="p-6">
 								{fields.map((field, index) => (
-									
 									<div
 										key={field.id}
 										className="p-4 border border-gray-300 rounded-lg bg-gray-50 mb-4"
@@ -389,7 +418,7 @@ function CrearOrdenDeVenta() {
 											)}
 										</div>
 
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 											<div className="space-y-2">
 												<label
 													htmlFor={`producto-${field.id}`}
@@ -405,8 +434,7 @@ function CrearOrdenDeVenta() {
 													}
 													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
 												>
-													<option value="" disabled selected hidden>
-														{" "}
+													<option value="" disabled hidden>
 														Seleccione una opción
 													</option>
 													{products.map((product) => (
@@ -426,11 +454,7 @@ function CrearOrdenDeVenta() {
 																	: "inherit",
 															}}
 														>
-															{product.nombre}
-															{isProductoSeleccionado(
-																product.id_producto,
-																field.id
-															) && " (Ya seleccionado)"}
+															{product.nombre} - {product.descripcion}
 														</option>
 													))}
 												</select>
@@ -458,8 +482,15 @@ function CrearOrdenDeVenta() {
 													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 												/>
 											</div>
+
 											<div className="space-y-2">
-											</div>	
+												<label className="block text-sm font-medium text-gray-700">
+													Unidad de Medida
+												</label>
+												<div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+													{field.unidad_medida || "Seleccione un producto"}
+												</div>
+											</div>
 										</div>
 									</div>
 								))}
@@ -471,6 +502,7 @@ function CrearOrdenDeVenta() {
 										</span>
 									</div>
 								)}
+
 								<div className="flex flex-col sm:flex-row gap-4">
 									{cantidadElementos < products.length && (
 										<button
@@ -491,14 +523,13 @@ function CrearOrdenDeVenta() {
 													d="M12 4v16m8-8H4"
 												/>
 											</svg>
-											Agregar Campo
+											Agregar Producto
 										</button>
 									)}
 
 									<button
 										type="submit"
 										className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-200"
-										onClick={handleSubmit}
 									>
 										Enviar Pedido
 									</button>
