@@ -1,37 +1,143 @@
+/* ===== VARIABLES Y CONFIGURACIÓN ===== */
+:root {
+  /* Colores principales */
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --primary-active: #004085;
+  --success-color: #28a745;
+  --success-hover: #218838;
+  --danger-color: #dc3545;
+  --danger-hover: #c82333;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --secondary-color: #6c757d;
+  --secondary-hover: #5a6268;
+  
+  /* Colores de texto */
+  --text-primary: #1f2937;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+  
+  /* Colores de fondo */
+  --bg-white: #ffffff;
+  --bg-light: #f9fafb;
+  --bg-lighter: #f8f9fa;
+  --bg-gray: #f3f4f6;
+  
+  /* Bordes */
+  --border-color: #e5e7eb;
+  --border-light: #e9ecef;
+  --border-dark: #d1d5db;
+  
+  /* Estados */
+  --estado-pendiente: #dbeafe;
+  --estado-pendiente-text: #1e40af;
+  --estado-pendiente-pago: #fed7aa;
+  --estado-pendiente-pago-text: #9a3412;
+  --estado-completada: #dcfce7;
+  --estado-completada-text: #166534;
+  
+  /* Prioridades */
+  --prioridad-urgente: #dc3545;
+  --prioridad-alta: #fd7e14;
+  --prioridad-media: #ffc107;
+  --prioridad-baja: #28a745;
+  
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 3rem;
+  
+  /* Bordes radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 9999px;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Transiciones */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+/* ===== ESTILOS BASE ===== */
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-md);
+}
+
+/* ===== HEADER Y TÍTULOS ===== */
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .title {
   font-size: 2rem;
   font-weight: bold;
-  color: #1f2937;
-  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  margin: 0;
 }
 
+.botonCrearOrden {
+  background-color: var(--primary-color);
+  color: var(--bg-white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color var(--transition-normal);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.botonCrearOrden:hover {
+  background-color: var(--primary-hover);
+}
+
+.botonCrearOrden:active {
+  background-color: var(--primary-active);
+}
+
+/* ===== LISTA DE ÓRDENES ===== */
 .ordenesList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .ordenItem {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s ease-in-out;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
 }
 
 .ordenItem:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
+/* ===== HEADER DE ORDEN ===== */
 .ordenHeader {
-  padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--bg-gray);
 }
 
 .headerTop {
@@ -39,8 +145,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .headerBottom {
@@ -48,80 +154,85 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .ordenId {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
+/* ===== BADGES ===== */
 .badgesContainer {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
 .badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-xl);
   font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid;
 }
 
-.badgeEstadoPendientePago {
-  background-color: #fed7aa;
-  color: #9a3412;
-  border-color: #fdba74;
-}
-
+/* Estados */
 .badgeEstadoPendiente {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: var(--estado-pendiente);
+  color: var(--estado-pendiente-text);
   border-color: #93c5fd;
 }
 
+.badgeEstadoPendientePago {
+  background-color: var(--estado-pendiente-pago);
+  color: var(--estado-pendiente-pago-text);
+  border-color: #fdba74;
+}
+
 .badgeEstadoCompletada {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: var(--estado-completada);
+  color: var(--estado-completada-text);
   border-color: #86efac;
 }
 
 .badgeEstadoDefault {
-  background-color: #f3f4f6;
-  color: #6b7280;
-  border-color: #d1d5db;
+  background-color: var(--bg-gray);
+  color: var(--text-muted);
+  border-color: var(--border-dark);
+}
+
+/* Prioridades */
+.badgePrioridadUrgente {
+  background-color: var(--prioridad-urgente);
+  color: var(--bg-white);
 }
 
 .badgePrioridadAlta {
-  background-color: #fecaca;
-  color: #991b1b;
-  border-color: #fca5a5;
+  background-color: var(--prioridad-alta);
+  color: var(--bg-white);
 }
 
 .badgePrioridadMedia {
-  background-color: #fef3c7;
-  color: #92400e;
-  border-color: #fcd34d;
+  background-color: var(--prioridad-media);
+  color: var(--text-primary);
 }
 
 .badgePrioridadBaja {
-  background-color: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
+  background-color: var(--prioridad-baja);
+  color: var(--bg-white);
 }
 
 .badgePrioridadDefault {
-  background-color: #f3f4f6;
-  color: #6b7280;
-  border-color: #d1d5db;
+  background-color: var(--secondary-color);
+  color: var(--bg-white);
 }
 
+/* ===== INFORMACIÓN DE ORDEN ===== */
 .fechaInfo {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .clienteInfo {
@@ -130,124 +241,163 @@
 
 .clienteLabel {
   font-weight: 500;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
 .clienteNombre {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
-.ordenBody {
-  padding: 1rem;
+.fechaEntregaInfo {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #e7f3ff;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary-color);
 }
 
-.productosTitle {
-  font-size: 0.875rem;
+.fechaEntregaLabel {
+  font-weight: 600;
+  color: #0056b3;
+  margin-right: var(--spacing-sm);
+}
+
+.fechaEntregaValor {
+  color: #495057;
   font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.5rem;
+}
+
+/* ===== CUERPO DE ORDEN ===== */
+.ordenBody {
+  padding: var(--spacing-md);
+}
+
+/* ===== PRODUCTOS ===== */
+.productosHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
 }
 
 .productosList {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .productoItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
-  background-color: #f9fafb;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-light);
+  border-radius: var(--radius-md);
 }
 
 .productoInfo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .productoNombre {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .productoTipo {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .productoCantidad {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
-.sinProductos {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 3rem;
-}
-
-.spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.error {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 1rem;
-  color: #dc2626;
-  text-align: center;
-}
-
-.sinOrdenes {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-}
-
-/* Agrega estos estilos al archivo existente */
-
+/* ===== EDICIÓN ===== */
 .edicionContainer {
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f9f9f9;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  background-color: var(--bg-lighter);
 }
 
+.prioridadEdicion,
+.fechaEntregaEdicion {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--bg-lighter);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.prioridadEdicion h4,
+.fechaEntregaEdicion h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: #495057;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.inputGrupo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.inputGrupo label {
+  font-weight: 500;
+  color: #495057;
+  min-width: 150px;
+}
+
+.selectPrioridad,
+.inputFecha,
+.selectProducto,
+.inputCantidad,
+.inputCantidadNuevo {
+  padding: 0.625rem 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  background-color: var(--bg-white);
+  transition: all var(--transition-normal);
+}
+
+.selectPrioridad:focus,
+.inputFecha:focus,
+.selectProducto:focus,
+.inputCantidad:focus,
+.inputCantidadNuevo:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.inputCantidad,
+.inputCantidadNuevo {
+  width: 80px;
+  text-align: center;
+}
+
+.inputFecha {
+  flex: 1;
+  max-width: 250px;
+}
+
+/* ===== PRODUCTOS EN EDICIÓN ===== */
 .productoEdicionItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background-color: white;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background-color: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-dark);
 }
 
 .productoInfoEdit {
@@ -255,33 +405,21 @@
 }
 
 .productoUnidad {
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.9em;
-  margin-left: 8px;
+  margin-left: var(--spacing-sm);
 }
 
 .controlesEdicion {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
-.inputCantidad {
-  width: 80px;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.inputCantidad:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
+/* ===== BOTONES ===== */
 .botonEliminar {
-  background: #dc3545;
-  color: white;
+  background: var(--danger-color);
+  color: var(--bg-white);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -290,86 +428,279 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 1rem;
+  transition: background-color var(--transition-normal);
 }
 
 .botonEliminar:hover {
-  background: #c82333;
+  background: var(--danger-hover);
 }
 
+.botonEditar {
+  background: var(--primary-color);
+  color: var(--bg-white);
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color var(--transition-normal);
+}
+
+.botonEditar:hover {
+  background: var(--primary-hover);
+}
+
+.botonAgregar {
+  background: var(--success-color);
+  color: var(--bg-white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+}
+
+.botonAgregar:hover:not(:disabled) {
+  background: var(--success-hover);
+}
+
+.botonAgregar:disabled {
+  background: var(--secondary-color);
+  cursor: not-allowed;
+}
+
+.botonLimpiarFecha {
+  padding: 0.5rem 0.75rem;
+  background-color: var(--secondary-color);
+  color: var(--bg-white);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all var(--transition-normal);
+}
+
+.botonLimpiarFecha:hover {
+  background-color: var(--secondary-hover);
+  transform: scale(1.05);
+}
+
+/* ===== GRUPOS DE BOTONES ===== */
 .botonesEdicion {
   display: flex;
-  gap: 12px;
-  margin-top: 16px;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
   justify-content: flex-end;
 }
 
 .botonGuardar {
-  background: #28a745;
-  color: white;
+  background: var(--success-color);
+  color: var(--bg-white);
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
+  transition: background-color var(--transition-normal);
 }
 
 .botonGuardar:hover:not(:disabled) {
-  background: #218838;
+  background: var(--success-hover);
 }
 
 .botonGuardar:disabled {
-  background: #6c757d;
+  background: var(--secondary-color);
   cursor: not-allowed;
 }
 
 .botonCancelar {
-  background: #6c757d;
-  color: white;
+  background: var(--secondary-color);
+  color: var(--bg-white);
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background-color var(--transition-normal);
 }
 
 .botonCancelar:hover:not(:disabled) {
-  background: #5a6268;
+  background: var(--secondary-hover);
 }
 
-.botonEditar {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
+/* ===== AGREGAR PRODUCTOS ===== */
+.agregarProductoContainer {
+  border: 1px solid var(--border-dark);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-md) 0;
+  background-color: var(--bg-lighter);
 }
 
-.botonEditar:hover {
-  background: #0056b3;
-}
-
-.productosHeader {
+.formAgregarProducto {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
+.labelCantidad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ===== ESTADOS ESPECIALES ===== */
+.sinProductos,
+.sinOrdenes {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+}
+
+.sinProductosMsg {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xxl);
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  color: #dc2626;
+  text-align: center;
+}
+
+.botonReintentar {
+  background: var(--primary-color);
+  color: var(--bg-white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-top: var(--spacing-sm);
+  transition: background-color var(--transition-normal);
+}
+
+.botonReintentar:hover {
+  background: var(--primary-hover);
+}
+
+.fechaHelp {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: var(--spacing-md);
+  }
+  
+  .headerContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .botonCrearOrden {
+    align-self: stretch;
+    text-align: center;
   }
   
   .headerTop,
   .headerBottom {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
   }
   
   .badgesContainer {
     width: 100%;
+  }
+  
+  .inputGrupo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .inputGrupo label {
+    min-width: auto;
+  }
+  
+  .inputFecha {
+    max-width: none;
+  }
+  
+  .botonLimpiarFecha {
+    align-self: flex-start;
+  }
+  
+  .prioridadEdicion .inputGrupo,
+  .fechaEntregaEdicion .inputGrupo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .botonesEdicion {
+    flex-direction: column;
+  }
+  
+  .formAgregarProducto {
+    flex-direction: column;
+  }
+  
+  .productoEdicionItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .controlesEdicion {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .ordenHeader,
+  .ordenBody {
+    padding: var(--spacing-sm);
+  }
+  
+  .botonCrearOrden {
+    padding: 0.875rem var(--spacing-md);
   }
 }
