@@ -11,12 +11,14 @@ class OrdenProduccionService {
 			estado:
 				datosBackend.id_lote_produccion?.id_estado_lote_produccion
 					?.descripcion || "Sin estado",
+			id_estado: datosBackend.id_lote_produccion?.id_estado_lote_produccion?.id_estado_lote_produccion || null,
 
 			// Cantidad
 			cantidad: datosBackend.cantidad || 0,
 
 			// Información del producto
 			producto: datosBackend.id_producto.nombre || "Sin producto",
+			id_producto: datosBackend.id_producto.id_producto || null,
 			producto_descripcion: datosBackend.id_producto.descripcion || "Sin descripción",
 
 			// Fechas
@@ -25,6 +27,7 @@ class OrdenProduccionService {
 
 			// Personal
 			operario: `${datosBackend.id_operario.nombre || "Sin nombre"} ${datosBackend.id_operario.apellido || "Sin apellido"}`,
+			id_operario: datosBackend.id_operario.id_operario || null,
 			supervisor: `${datosBackend.id_supervisor.nombre || "Sin nombre"} ${datosBackend.id_supervisor.apellido || "Sin apellido"}`,
 
 			// Información adicional del lote
@@ -82,9 +85,27 @@ class OrdenProduccionService {
 	}
 
 	// Función para obtener todas las páginas (si necesitas todos los datos)
-	static async obtenerTodasLasOrdenes() {
+	static async obtenerTodasLasOrdenes(filtros = {}) {
 		let todasLasOrdenes = [];
-		let url = "http://frozenback-test.up.railway.app/api/produccion/ordenes/";
+		let url = "https://frozenback-test.up.railway.app/api/produccion/ordenes/";
+
+		// Construir parámetros de filtro
+		const params = new URLSearchParams();
+		if (filtros.producto && filtros.producto !== "todos") {
+			params.append("producto", filtros.producto);
+		}
+		if (filtros.estado && filtros.estado !== "todos") {
+			params.append("estado", filtros.estado);
+		}
+		if (filtros.operario && filtros.operario !== "todos") {
+			params.append("operario", filtros.operario);
+		}
+
+		// Agregar parámetros a la URL si existen
+		const queryString = params.toString();
+		if (queryString) {
+			url += `?${queryString}`;
+		}
 
 		try {
 			const response = await fetch(url);
@@ -107,6 +128,62 @@ class OrdenProduccionService {
 		} catch (error) {
 			console.error("Error en obtenerTodasLasOrdenes:", error);
 			throw new Error("No se pudieron cargar todas las órdenes");
+		}
+	}
+
+	// Función para obtener todos los estados disponibles
+	static async obtenerEstados() {
+		try {
+			const url = "https://frozenback-test.up.railway.app/api/produccion/estados/";
+			console.log("Obteniendo estados desde:", url);
+			
+			const response = await fetch(url);
+
+			if (!response.ok) {
+				throw new Error(`Error HTTP: ${response.status}`);
+			}
+
+			const datos = await response.json();
+			console.log("Respuesta de estados:", datos);
+			
+			const estadosTransformados = datos.results.map(estado => ({
+				id: estado.id_estado_orden_produccion,
+				nombre: estado.descripcion
+			}));
+			
+			console.log("Estados transformados:", estadosTransformados);
+			return estadosTransformados;
+		} catch (error) {
+			console.error("Error en obtenerEstados:", error);
+			throw new Error("No se pudieron cargar los estados");
+		}
+	}
+
+	// Función para obtener todos los operarios (rol = 1)
+	static async obtenerOperarios() {
+		try {
+			const url = "https://frozenback-test.up.railway.app/api/empleados/empleados-filter/?rol=1";
+			console.log("Obteniendo operarios desde:", url);
+			
+			const response = await fetch(url);
+
+			if (!response.ok) {
+				throw new Error(`Error HTTP: ${response.status}`);
+			}
+
+			const datos = await response.json();
+			console.log("Respuesta de operarios:", datos);
+			
+			const operariosTransformados = datos.results.map(operario => ({
+				id: operario.id_empleado,
+				nombre: `${operario.nombre || ""} ${operario.apellido || ""}`.trim()
+			}));
+			
+			console.log("Operarios transformados:", operariosTransformados);
+			return operariosTransformados;
+		} catch (error) {
+			console.error("Error en obtenerOperarios:", error);
+			throw new Error("No se pudieron cargar los operarios");
 		}
 	}
 
