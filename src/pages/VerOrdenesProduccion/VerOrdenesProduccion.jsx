@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./VerOrdenesProduccion.module.css";
+import OrdenProduccionService from "../../classes/DTOS/OrdenProduccionService";
 
 const VerOrdenesProduccion = () => {
 	const [ordenes, setOrdenes] = useState([]);
@@ -11,87 +12,17 @@ const VerOrdenesProduccion = () => {
 	const [filtroEstado, setFiltroEstado] = useState("todos");
 	const [filtroOperario, setFiltroOperario] = useState("todos");
 
-	// Mock de datos con la nueva estructura
-	const mockFetchOrdenes = () => {
-		return new Promise((resolve) => {
-			setTimeout(() => {
-				const datosMock = [
-					{
-						Id: 87,
-						id_linea: 1,
-						Estado: "en espera",
-						Cantidad: 5,
-						Producto: "Empanada de Carne",
-						Fecha_creacion: "2025-10-01T03:30:56",
-						Fecha_inicio: null,
-						operario: "Carlos Rodríguez",
-					},
-					{
-						Id: 88,
-						id_linea: 2,
-						Estado: "en proceso",
-						Cantidad: 3,
-						Producto: "Pizza Napolitana",
-						Fecha_creacion: "2025-10-02T10:15:00",
-						Fecha_inicio: "2025-10-02T11:00:00",
-						operario: "María González",
-					},
-					{
-						Id: 89,
-						id_linea: 1,
-						Estado: "finalizado",
-						Cantidad: 8,
-						Producto: "Empanada de Pollo",
-						Fecha_creacion: "2025-10-03T08:45:00",
-						Fecha_inicio: "2025-10-03T09:00:00",
-						operario: "Juan Pérez",
-					},
-					{
-						Id: 90,
-						id_linea: 3,
-						Estado: "en espera",
-						Cantidad: 12,
-						Producto: "Alfajor de Maicena",
-						Fecha_creacion: "2025-10-04T14:20:00",
-						Fecha_inicio: null,
-						operario: "Ana López",
-					},
-					{
-						Id: 91,
-						id_linea: 2,
-						Estado: "en proceso",
-						Cantidad: 6,
-						Producto: "Pizza Especial",
-						Fecha_creacion: "2025-10-05T09:30:00",
-						Fecha_inicio: "2025-10-05T10:15:00",
-						operario: "Pedro Sánchez",
-					},
-					{
-						Id: 92,
-						id_linea: 1,
-						Estado: "en espera",
-						Cantidad: 10,
-						Producto: "Empanada de Jamón y Queso",
-						Fecha_creacion: "2025-10-06T16:45:00",
-						Fecha_inicio: null,
-						operario: "Laura Martínez",
-					},
-				];
-				resolve(datosMock);
-			}, 1000);
-		});
-	};
+	
 
 	useEffect(() => {
 		const obtenerOrdenes = async () => {
 			try {
-				const dateishon = await fetchData()
-				
-				setCargando(true);
-				const datos = await mockFetchOrdenes();
-				setOrdenes(datos);
-				setOrdenesFiltradas(datos);
-				console.log(dateishon)
+
+				const {url, todasLasOrdenes} = await OrdenProduccionService.obtenerTodasLasOrdenes();
+				console.log(todasLasOrdenes)
+				setPaginacion(url);
+				setOrdenes(todasLasOrdenes);
+				setOrdenesFiltradas(todasLasOrdenes);
 			} catch (err) {
 				setError("Error al cargar las órdenes");
 				console.error("Error:", err);
@@ -112,18 +43,9 @@ const VerOrdenesProduccion = () => {
 	}
 
 	// Obtener listas únicas para los filtros
-	const productosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.Producto)),
-	];
-	const estadosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.Estado)),
-	];
-	const operariosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.operario)),
-	];
+ const productosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.producto))];
+  const estadosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.estado))];
+  const operariosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.operario))];
 
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
@@ -275,24 +197,24 @@ const VerOrdenesProduccion = () => {
 					ordenesFiltradas.map((orden) => (
 						<div key={orden.Id} className={styles.cardOrden}>
 							<div className={styles.cardHeader}>
-								<h3>Orden #{orden.Id}</h3>
+								<h3>Orden #{orden.id}</h3>
 								<span
 									className={styles.estado}
-									style={{ backgroundColor: getColorEstado(orden.Estado) }}
+									style={{ backgroundColor: getColorEstado(orden.estado) }}
 								>
-									{orden.Estado.toUpperCase()}
+									{orden.estado.toUpperCase()}
 								</span>
 							</div>
 
 							<div className={styles.cardBody}>
 								<div className={styles.infoGrupo}>
 									<strong>Producto:</strong>
-									<span>{orden.Producto}</span>
+									<span>{orden.producto}</span>
 								</div>
 
 								<div className={styles.infoGrupo}>
 									<strong>Cantidad:</strong>
-									<span>{orden.Cantidad} unidades</span>
+									<span>{orden.cantidad} unidades</span>
 								</div>
 
 								<div className={styles.infoGrupo}>
@@ -307,12 +229,12 @@ const VerOrdenesProduccion = () => {
 
 								<div className={styles.infoGrupo}>
 									<strong>Creada:</strong>
-									<span>{formatearFecha(orden.Fecha_creacion)}</span>
+									<span>{formatearFecha(orden.fecha_creacion)}</span>
 								</div>
 
 								<div className={styles.infoGrupo}>
 									<strong>Iniciada:</strong>
-									<span>{formatearFecha(orden.Fecha_inicio)}</span>
+									<span>{orden.fecha_inicio}</span>
 								</div>
 							</div>
 
