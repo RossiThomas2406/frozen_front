@@ -4,6 +4,7 @@ import styles from "./VerOrdenesProduccion.module.css";
 const VerOrdenesProduccion = () => {
 	const [ordenes, setOrdenes] = useState([]);
 	const [ordenesFiltradas, setOrdenesFiltradas] = useState([]);
+	const [paginacion, setPaginacion] = useState(0);
 	const [cargando, setCargando] = useState(true);
 	const [error, setError] = useState(null);
 	const [filtroProducto, setFiltroProducto] = useState("todos");
@@ -84,10 +85,13 @@ const VerOrdenesProduccion = () => {
 	useEffect(() => {
 		const obtenerOrdenes = async () => {
 			try {
+				const dateishon = await fetchData()
+				
 				setCargando(true);
 				const datos = await mockFetchOrdenes();
 				setOrdenes(datos);
 				setOrdenesFiltradas(datos);
+				console.log(dateishon)
 			} catch (err) {
 				setError("Error al cargar las órdenes");
 				console.error("Error:", err);
@@ -98,6 +102,14 @@ const VerOrdenesProduccion = () => {
 
 		obtenerOrdenes();
 	}, []);
+
+	async function fetchData(url) {
+		const response = await fetch("https://frozenback-test.up.railway.app/api/produccion/ordenes/");
+		if (!response.ok) {
+			throw new Error("Error al obtener datos");
+		}
+		return response.json();
+	}
 
 	// Obtener listas únicas para los filtros
 	const productosUnicos = [

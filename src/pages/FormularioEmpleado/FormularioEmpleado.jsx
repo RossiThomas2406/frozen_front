@@ -107,7 +107,7 @@ export default function FormularioEmpleado() {
 				"https://frozenback-test.up.railway.app/api/empleados/departamentos/"
 			);
 			const departamentos = await response.json();
-			return departamentos;
+			return departamentos.results;
 		} catch (error) {
 			console.log(error);
 		}
@@ -118,7 +118,7 @@ export default function FormularioEmpleado() {
 				"https://frozenback-test.up.railway.app/api/empleados/roles/"
 			);
 			const roles = await response.json();
-			return roles;
+			return roles.results;
 		} catch (error) {
 			console.log(error);
 		}
@@ -129,7 +129,7 @@ export default function FormularioEmpleado() {
 				"https://frozenback-test.up.railway.app/api/empleados/turnos/"
 			);
 			const turnos = await response.json();
-			return turnos;
+			return turnos.results;
 		} catch (error) {
 			console.log(error);
 		}
