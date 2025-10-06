@@ -523,7 +523,7 @@ function CrearOrdenDeVenta() {
 													d="M12 4v16m8-8H4"
 												/>
 											</svg>
-											Agregar Producto
+											Agregar Campo
 										</button>
 									)}
 
