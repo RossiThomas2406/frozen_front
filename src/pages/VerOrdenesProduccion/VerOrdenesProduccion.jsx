@@ -1,60 +1,91 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import styles from "./VerOrdenesProduccion.module.css";
 import OrdenProduccionService from "../../classes/DTOS/OrdenProduccionService";
 
 const VerOrdenesProduccion = () => {
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [ordenes, setOrdenes] = useState([]);
 	const [ordenesFiltradas, setOrdenesFiltradas] = useState([]);
 	const [paginacion, setPaginacion] = useState(0);
 	const [cargando, setCargando] = useState(true);
 	const [error, setError] = useState(null);
+
+	// Estados para las listas de filtros
+	const [estadosDisponibles, setEstadosDisponibles] = useState([]);
+	const [operariosDisponibles, setOperariosDisponibles] = useState([]);
+
+	// Obtener filtros desde los parámetros de URL
 	const [filtroProducto, setFiltroProducto] = useState("todos");
 	const [filtroEstado, setFiltroEstado] = useState("todos");
 	const [filtroOperario, setFiltroOperario] = useState("todos");
 
+	// Cargar estados y operarios al inicializar desde endpoints específicos
 	useEffect(() => {
-		const obtenerOrdenes = async () => {
+		const cargarDatosIniciales = async () => {
 			try {
-				const { url, todasLasOrdenes } =
-					await OrdenProduccionService.obtenerTodasLasOrdenes();
-				console.log(todasLasOrdenes);
-				setPaginacion(url);
-				setOrdenes(todasLasOrdenes);
-				setOrdenesFiltradas(todasLasOrdenes);
+				// Obtener todos los estados desde /produccion/estados/
+				// Obtener todos los operarios desde /empleados/empleados-filter/?rol=1
+				const [estados, operarios] = await Promise.all([
+					OrdenProduccionService.obtenerEstados(),
+					OrdenProduccionService.obtenerOperarios(),
+				]);
+
+				setEstadosDisponibles(estados);
+				setOperariosDisponibles(operarios);
 			} catch (err) {
-				setError("Error al cargar las órdenes");
-				console.error("Error:", err);
-			} finally {
-				setCargando(false);
+				console.error("Error al cargar datos iniciales:", err);
 			}
 		};
 
-		obtenerOrdenes();
+		cargarDatosIniciales();
 	}, []);
 
-	async function fetchData(url) {
-		const response = await fetch(
-			"https://frozenback-test.up.railway.app/api/produccion/ordenes/"
-		);
-		if (!response.ok) {
-			throw new Error("Error al obtener datos");
-		}
-		return response.json();
-	}
+	useEffect(() => {
+		const fetchData = async () => {
+			await obtenerOrdenes();
+		};
+		fetchData();
+	}, [filtroProducto, filtroEstado, filtroOperario]);
 
-	// Obtener listas únicas para los filtros
-	const productosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.producto)),
-	];
-	const estadosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.estado)),
-	];
-	const operariosUnicos = [
-		"todos",
-		...new Set(ordenes.map((orden) => orden.operario)),
-	];
+	
+
+
+	const obtenerOrdenes = async () => {
+		try {
+			setError(null);
+
+			// Construir objeto de filtros para enviar al servicio
+			const filtros = {
+				producto: filtroProducto !== "todos" ? filtroProducto : null,
+				estado: filtroEstado !== "todos" ? filtroEstado : null,
+				operario: filtroOperario !== "todos" ? filtroOperario : null,
+			};
+			const { url, todasLasOrdenes } =
+				await OrdenProduccionService.obtenerTodasLasOrdenes(filtros);
+			setPaginacion(url);
+			setOrdenes(todasLasOrdenes);
+			setOrdenesFiltradas(todasLasOrdenes);
+		} catch (err) {
+			setError("Error al cargar las órdenes");
+			console.error("Error:", err);
+		} finally {
+			setCargando(false);
+		}
+	};
+	// Obtener productos únicos desde las órdenes (mantenemos esto porque no hay endpoint específico)
+	const productosUnicos = ordenes.reduce((acc, orden) => {
+		if (orden.id_producto && !acc.find((p) => p.id === orden.id_producto)) {
+			acc.push({ id: orden.id_producto, nombre: orden.producto });
+		}
+		return acc;
+	}, []);
+
+	// Usar estados y operarios desde los endpoints específicos
+	const estadosUnicos = estadosDisponibles;
+	const operariosUnicos = operariosDisponibles;
+
+	// Debug logs
 
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
@@ -66,42 +97,89 @@ const VerOrdenesProduccion = () => {
 		return colores[estado] || "#95a5a6";
 	};
 
-	// Aplicar filtros
-	useEffect(() => {
-		let resultado = [...ordenes];
-
-		// Aplicar filtro por producto
-		if (filtroProducto !== "todos") {
-			resultado = resultado.filter((orden) =>
-				orden.Producto.toLowerCase().includes(filtroProducto.toLowerCase())
+	const manejarIniciarOrden = async (idOrden) => {
+		try {
+			const response = await fetch(
+				`https://frozenback-test.up.railway.app/api/produccion/ordenes/${idOrden}/actualizar_estado/`,
+				{
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ id_estado_orden_produccion: 4 }), // 3 = En proceso
+				}
 			);
-		}
 
-		// Aplicar filtro por estado
-		if (filtroEstado !== "todos") {
-			resultado = resultado.filter(
-				(orden) => orden.Estado.toLowerCase() === filtroEstado.toLowerCase()
-			);
-		}
-
-		// Aplicar filtro por operario
-		if (filtroOperario !== "todos") {
-			resultado = resultado.filter((orden) =>
-				orden.operario.toLowerCase().includes(filtroOperario.toLowerCase())
-			);
-		}
-
-		// Ordenar por estado (en espera > en proceso > finalizado) y luego por fecha de creación
-		resultado.sort((a, b) => {
-			const ordenEstado = { "en espera": 3, "en proceso": 2, finalizado: 1 };
-			if (ordenEstado[a.Estado] !== ordenEstado[b.Estado]) {
-				return ordenEstado[b.Estado] - ordenEstado[a.Estado];
+			if (!response.ok) {
+				throw new Error(`Error HTTP: ${response.status}`);
 			}
-			return new Date(b.Fecha_creacion) - new Date(a.Fecha_creacion);
-		});
 
-		setOrdenesFiltradas(resultado);
-	}, [ordenes, filtroProducto, filtroEstado, filtroOperario]);
+			// Actualizar la orden en el estado local
+			const ordenActualizada = await response.json();
+			const obtenerOrdenModificada = await fetch(
+				`https://frozenback-test.up.railway.app/api/produccion/ordenes/${idOrden}/`
+			);
+			const datosOrdenModificada = await obtenerOrdenModificada.json();
+			const ordenTransformada =
+				OrdenProduccionService.transformarOrdenDTO(datosOrdenModificada);
+
+			console.log("Orden transformada:", ordenTransformada);
+			setOrdenesFiltradas((prevOrdenes) =>
+				prevOrdenes.map((orden) =>
+					orden.id === idOrden ? ordenTransformada : orden
+				)
+			);
+
+			console.log("Orden iniciada:", ordenesFiltradas);
+		} catch (error) {
+			console.error("Error al actualizar la orden:", error);
+		}
+	};
+
+	// Función para actualizar la URL con los filtros
+	const actualizarURL = (nuevosFiltros) => {
+		const params = new URLSearchParams();
+
+		if (nuevosFiltros.producto && nuevosFiltros.producto !== "todos") {
+			params.set("producto", nuevosFiltros.producto);
+		}
+		if (nuevosFiltros.estado && nuevosFiltros.estado !== "todos") {
+			params.set("estado", nuevosFiltros.estado);
+		}
+		if (nuevosFiltros.operario && nuevosFiltros.operario !== "todos") {
+			params.set("operario", nuevosFiltros.operario);
+		}
+
+		setSearchParams(params);
+	};
+
+	// Funciones para manejar cambios en los filtros
+	const manejarCambioProducto = (nuevoProducto) => {
+		setFiltroProducto(nuevoProducto);
+		actualizarURL({
+			producto: nuevoProducto,
+			estado: filtroEstado,
+			operario: filtroOperario,
+		});
+	};
+
+	const manejarCambioEstado = (nuevoEstado) => {
+		setFiltroEstado(nuevoEstado);
+		actualizarURL({
+			producto: filtroProducto,
+			estado: nuevoEstado,
+			operario: filtroOperario,
+		});
+	};
+
+	const manejarCambioOperario = (nuevoOperario) => {
+		setFiltroOperario(nuevoOperario);
+		actualizarURL({
+			producto: filtroProducto,
+			estado: filtroEstado,
+			operario: nuevoOperario,
+		});
+	};
 
 	const formatearFecha = (fechaISO) => {
 		if (!fechaISO) return "No iniciada";
@@ -118,6 +196,29 @@ const VerOrdenesProduccion = () => {
 		setFiltroProducto("todos");
 		setFiltroEstado("todos");
 		setFiltroOperario("todos");
+		// Limpiar URL
+		setSearchParams({});
+	};
+
+	const cargarMasOrdenes = async () => {
+		if (!paginacion) return; // No hay más páginas
+
+		try {
+			setCargando(true);
+			const response = await fetch(paginacion);
+			if (!response.ok) throw new Error("Error al cargar más órdenes");
+			const {next, results} = await response.json();
+			const ordenesTransformadas = results.map((orden) =>
+				OrdenProduccionService.transformarOrdenDTO(orden)
+			);
+
+			setPaginacion(next);
+			setOrdenesFiltradas((prevOrdenes) => [...prevOrdenes, ...ordenesTransformadas]);
+		} catch (error) {
+			console.error("Error al cargar más órdenes:", error);
+		} finally {
+			setCargando(false);
+		}
 	};
 
 	if (cargando) {
@@ -134,7 +235,14 @@ const VerOrdenesProduccion = () => {
 		<div className={styles.verOrdenesProduccion}>
 			<h2 className={styles.titulo}>Órdenes de Producción</h2>
 
-			{/* Controles de Filtrado */}
+			{/* Controles de Filtrado - Los filtros se sincronizan con la URL usando IDs */}
+			{/* Ejemplos de URLs: 
+				- /ordenes/?producto=3 (filtrar por producto con ID 3)
+				- /ordenes/?estado=2 (filtrar por estado con ID 2)  
+				- /ordenes/?operario=32 (filtrar por operario con ID 32)
+				- /ordenes/?producto=3&estado=2&operario=32 (combinar múltiples filtros)
+				Los valores en la URL corresponden a los IDs, no a los nombres
+			*/}
 			<div className={styles.controles}>
 				<div className={styles.filtroGrupo}>
 					<label htmlFor="filtroProducto" className={styles.label}>
@@ -143,12 +251,13 @@ const VerOrdenesProduccion = () => {
 					<select
 						id="filtroProducto"
 						value={filtroProducto}
-						onChange={(e) => setFiltroProducto(e.target.value)}
+						onChange={(e) => manejarCambioProducto(e.target.value)}
 						className={styles.select}
 					>
+						<option value="todos">Todos los productos</option>
 						{productosUnicos.map((producto) => (
-							<option key={producto} value={producto}>
-								{producto === "todos" ? "Todos los productos" : producto}
+							<option key={producto.id} value={producto.id}>
+								{producto.nombre}
 							</option>
 						))}
 					</select>
@@ -161,12 +270,13 @@ const VerOrdenesProduccion = () => {
 					<select
 						id="filtroEstado"
 						value={filtroEstado}
-						onChange={(e) => setFiltroEstado(e.target.value)}
+						onChange={(e) => manejarCambioEstado(e.target.value)}
 						className={styles.select}
 					>
+						<option value="todos">Todos los estados</option>
 						{estadosUnicos.map((estado) => (
-							<option key={estado} value={estado}>
-								{estado === "todos" ? "Todos los estados" : estado}
+							<option key={estado.id} value={estado.id}>
+								{estado.nombre}
 							</option>
 						))}
 					</select>
@@ -179,12 +289,13 @@ const VerOrdenesProduccion = () => {
 					<select
 						id="filtroOperario"
 						value={filtroOperario}
-						onChange={(e) => setFiltroOperario(e.target.value)}
+						onChange={(e) => manejarCambioOperario(e.target.value)}
 						className={styles.select}
 					>
+						<option value="todos">Todos los operarios</option>
 						{operariosUnicos.map((operario) => (
-							<option key={operario} value={operario}>
-								{operario === "todos" ? "Todos los operarios" : operario}
+							<option key={operario.id} value={operario.id}>
+								{operario.nombre}
 							</option>
 						))}
 					</select>
@@ -204,7 +315,7 @@ const VerOrdenesProduccion = () => {
 			<div className={styles.listaOrdenes}>
 				{ordenesFiltradas.length > 0 ? (
 					ordenesFiltradas.map((orden) => (
-						<div key={orden.Id} className={styles.cardOrden}>
+						<div key={orden.id} className={styles.cardOrden}>
 							<div className={styles.cardHeader}>
 								<h3>Orden #{orden.id}</h3>
 								<span
@@ -248,8 +359,13 @@ const VerOrdenesProduccion = () => {
 							</div>
 
 							<div className={styles.cardFooter}>
-								{orden.estado === "En espera" ? (
-									<button className={styles.btnIniciar}>Iniciar</button>
+								{orden.estado === "Pendiente de inicio" ? (
+									<button
+										className={styles.btnIniciar}
+										onClick={() => manejarIniciarOrden(orden.id)}
+									>
+										Iniciar
+									</button>
 								) : null}
 
 								{orden.estado === "En proceso" ? (
@@ -275,6 +391,11 @@ const VerOrdenesProduccion = () => {
 					</div>
 				)}
 			</div>
+			{paginacion && (
+				<div>
+					<button className={styles.btnCargarMas} onClick={() => 	cargarMasOrdenes()}>Cargar Más ordenes</button>
+				</div>
+			)}
 		</div>
 	);
 };

@@ -243,6 +243,19 @@
 	border: 1px solid #f5b7b1;
 }
 
+.btnCargarMas{
+	background-color: blue;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9em;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	flex: 1;
+}
+
 .sinResultados {
 	text-align: center;
 	padding: 60px 20px;
