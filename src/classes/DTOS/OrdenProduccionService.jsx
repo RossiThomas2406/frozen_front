@@ -47,7 +47,7 @@ class OrdenProduccionService {
 
 	static async obtenerOrdenesPaginated(page = 1, filtros = {}) {
 		try {
-			let url = `http://frozenback-test.up.railway.app/api/produccion/ordenes/?page=${page}`;
+			let url = `https://frozenback-test.up.railway.app/api/produccion/ordenes/?page=${page}`;
 
 			// Agregar filtros a la URL si existen
 			const params = new URLSearchParams();
@@ -105,7 +105,7 @@ class OrdenProduccionService {
 	static async obtenerOrdenes() {
 		try {
 			const response = await fetch(
-				"http://frozenback-test.up.railway.app/api/produccion/ordenes/"
+				"https://frozenback-test.up.railway.app/api/produccion/ordenes/"
 			);
 
 			if (!response.ok) {
