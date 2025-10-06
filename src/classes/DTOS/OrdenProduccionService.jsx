@@ -17,23 +17,23 @@ class OrdenProduccionService {
 			cantidad: datosBackend.cantidad || 0,
 
 			// Información del producto
-			producto: datosBackend.id_producto.nombre || "Sin producto",
-			id_producto: datosBackend.id_producto.id_producto || null,
-			producto_descripcion: datosBackend.id_producto.descripcion || "Sin descripción",
+			producto: datosBackend.id_producto?.nombre || "Sin producto",
+			id_producto: datosBackend.id_producto?.id_producto || null,
+			producto_descripcion: datosBackend.id_producto?.descripcion || "Sin descripción",
 
 			// Fechas
 			fecha_creacion: datosBackend.fecha_creacion || "Sin fecha",
 			fecha_inicio: datosBackend.fecha_inicio || "Sin fecha",
 
 			// Personal
-			operario: `${datosBackend.id_operario.nombre || "Sin nombre"} ${datosBackend.id_operario.apellido || "Sin apellido"}`,
-			id_operario: datosBackend.id_operario.id_operario || null,
-			supervisor: `${datosBackend.id_supervisor.nombre || "Sin nombre"} ${datosBackend.id_supervisor.apellido || "Sin apellido"}`,
+			operario: `${datosBackend.id_operario?.nombre || "Sin nombre"} ${datosBackend.id_operario?.apellido || "Sin apellido"}`,
+			id_operario: datosBackend.id_operario?.id_operario || null,
+			supervisor: `${datosBackend.id_supervisor?.nombre || "Sin nombre"} ${datosBackend.id_supervisor?.apellido || "Sin apellido"}`,
 
 			// Información adicional del lote
 			id_lote_produccion: datosBackend.id_lote_produccion?.id_lote_produccion || null,
 			estado_orden_descripcion:
-				datosBackend.id_estado_orden_produccion.descripcion || "Sin estado",
+				datosBackend.id_estado_orden_produccion?.descripcion || "Sin estado",
 		};
 	}
 
@@ -65,7 +65,6 @@ class OrdenProduccionService {
 			const datosPagina = await response.json();
 
 			// Transformar cada orden en el array de results
-			console.log(datosPagina.results);
 			const ordenesTransformadas = datosPagina.results.map((ordenCompleja) => {
 				this.transformarOrdenDTO(ordenCompleja);
 			});
@@ -135,8 +134,6 @@ class OrdenProduccionService {
 	static async obtenerEstados() {
 		try {
 			const url = "https://frozenback-test.up.railway.app/api/produccion/estados/";
-			console.log("Obteniendo estados desde:", url);
-			
 			const response = await fetch(url);
 
 			if (!response.ok) {
@@ -144,14 +141,12 @@ class OrdenProduccionService {
 			}
 
 			const datos = await response.json();
-			console.log("Respuesta de estados:", datos);
 			
 			const estadosTransformados = datos.results.map(estado => ({
 				id: estado.id_estado_orden_produccion,
 				nombre: estado.descripcion
 			}));
 			
-			console.log("Estados transformados:", estadosTransformados);
 			return estadosTransformados;
 		} catch (error) {
 			console.error("Error en obtenerEstados:", error);
@@ -163,7 +158,6 @@ class OrdenProduccionService {
 	static async obtenerOperarios() {
 		try {
 			const url = "https://frozenback-test.up.railway.app/api/empleados/empleados-filter/?rol=1";
-			console.log("Obteniendo operarios desde:", url);
 			
 			const response = await fetch(url);
 
@@ -172,14 +166,12 @@ class OrdenProduccionService {
 			}
 
 			const datos = await response.json();
-			console.log("Respuesta de operarios:", datos);
 			
 			const operariosTransformados = datos.results.map(operario => ({
 				id: operario.id_empleado,
 				nombre: `${operario.nombre || ""} ${operario.apellido || ""}`.trim()
 			}));
 			
-			console.log("Operarios transformados:", operariosTransformados);
 			return operariosTransformados;
 		} catch (error) {
 			console.error("Error en obtenerOperarios:", error);

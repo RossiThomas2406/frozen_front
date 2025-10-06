@@ -32,23 +32,18 @@ const VerOrdenesProduccion = () => {
 	useEffect(() => {
 		const cargarDatosIniciales = async () => {
 			try {
-				console.log("Cargando estados y operarios...");
 				// Obtener todos los estados desde /produccion/estados/
 				// Obtener todos los operarios desde /empleados/empleados-filter/?rol=1
 				const [estados, operarios] = await Promise.all([
 					OrdenProduccionService.obtenerEstados(),
 					OrdenProduccionService.obtenerOperarios()
 				]);
-				
-				console.log("Estados cargados:", estados);
-				console.log("Operarios cargados:", operarios);
-				
+
 				setEstadosDisponibles(estados);
 				setOperariosDisponibles(operarios);
 			} catch (err) {
 				console.error("Error al cargar datos iniciales:", err);
 				// Datos mock para testing
-				console.log("Usando datos mock para testing...");
 			/*	setEstadosDisponibles([
 					{ id: 1, nombre: "En espera" },
 					{ id: 2, nombre: "En proceso" },
@@ -79,7 +74,6 @@ const VerOrdenesProduccion = () => {
 				};
 
 				const {url, todasLasOrdenes} = await OrdenProduccionService.obtenerTodasLasOrdenes(filtros);
-				console.log(todasLasOrdenes)
 				setPaginacion(url);
 				setOrdenes(todasLasOrdenes);
 				setOrdenesFiltradas(todasLasOrdenes);
@@ -115,10 +109,6 @@ const VerOrdenesProduccion = () => {
 	const operariosUnicos = operariosDisponibles;
 	
 	// Debug logs
-	console.log("estadosDisponibles:", estadosDisponibles);
-	console.log("operariosDisponibles:", operariosDisponibles);
-	console.log("estadosUnicos:", estadosUnicos);
-	console.log("operariosUnicos:", operariosUnicos);
 
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
@@ -143,7 +133,7 @@ const VerOrdenesProduccion = () => {
 		if (nuevosFiltros.operario && nuevosFiltros.operario !== "todos") {
 			params.set("operario", nuevosFiltros.operario);
 		}
-
+		
 		setSearchParams(params);
 	};
 
@@ -288,7 +278,7 @@ const VerOrdenesProduccion = () => {
 			<div className={styles.listaOrdenes}>
 				{ordenesFiltradas.length > 0 ? (
 					ordenesFiltradas.map((orden) => (
-						<div key={orden.Id} className={styles.cardOrden}>
+						<div key={orden.id} className={styles.cardOrden}>
 							<div className={styles.cardHeader}>
 								<h3>Orden #{orden.id}</h3>
 								<span
