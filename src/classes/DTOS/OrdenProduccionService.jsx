@@ -231,6 +231,25 @@ class OrdenProduccionService {
 		}
 	}
 
+	// En tu OrdenProduccionService.js - agrega este método
+	static async obtenerProductos() {
+		try {
+			const response = await fetch(
+				"https://frozenback-test.up.railway.app/api/productos/listar/"
+			);
+
+			if (!response.ok) {
+				throw new Error(`Error HTTP: ${response.status}`);
+			}
+
+			const data = await response.json();
+			return data.results;
+		} catch (error) {
+			console.error("Error en obtenerProductos:", error);
+			throw new Error("No se pudieron cargar los productos");
+		}
+	}
+
 	// Mock para desarrollo (con la estructura transformada)
 	static async obtenerOrdenesMock() {
 		return new Promise((resolve) => {

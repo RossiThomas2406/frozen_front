@@ -27,6 +27,7 @@ const VerOrdenesProduccion = () => {
 	// Estados para las listas de filtros
 	const [estadosDisponibles, setEstadosDisponibles] = useState([]);
 	const [operariosDisponibles, setOperariosDisponibles] = useState([]);
+	const [productos, setProductos] = useState([]);
 
 	// Estados para el modal de cancelación
 	const [modalCancelarAbierto, setModalCancelarAbierto] = useState(false);
@@ -34,22 +35,38 @@ const VerOrdenesProduccion = () => {
 	const [razonCancelacion, setRazonCancelacion] = useState("");
 	const [cancelando, setCancelando] = useState(false);
 
+	// Estados para el modal de desperdicio
+	const [modalDesperdicioAbierto, setModalDesperdicioAbierto] = useState(false);
+	const [cantidadDesperdicio, setCantidadDesperdicio] = useState(0);
+	const [registrandoDesperdicio, setRegistrandoDesperdicio] = useState(false);
+
+	// Estados para el modal de control de calidad
+	const [modalControlCalidadAbierto, setModalControlCalidadAbierto] = useState(false);
+	const [datosControlCalidad, setDatosControlCalidad] = useState({
+		observaciones: "",
+		aprobado: true,
+		cantidadAprobada: 0
+	});
+	const [registrandoControlCalidad, setRegistrandoControlCalidad] = useState(false);
+
 	// Obtener filtros desde los parámetros de URL
 	const [filtroProducto, setFiltroProducto] = useState("todos");
 	const [filtroEstado, setFiltroEstado] = useState("todos");
 	const [filtroOperario, setFiltroOperario] = useState("todos");
 
-	// Cargar estados y operarios al inicializar desde endpoints específicos
+	// Cargar estados, operarios y productos al inicializar
 	useEffect(() => {
 		const cargarDatosIniciales = async () => {
 			try {
-				const [estados, operarios] = await Promise.all([
+				const [estados, operarios, productosData] = await Promise.all([
 					OrdenProduccionService.obtenerEstados(),
 					OrdenProduccionService.obtenerOperarios(),
+					OrdenProduccionService.obtenerProductos(),
 				]);
 
 				setEstadosDisponibles(estados);
 				setOperariosDisponibles(operarios);
+				setProductos(productosData);
 			} catch (err) {
 				console.error("Error al cargar datos iniciales:", err);
 			}
@@ -115,6 +132,12 @@ const VerOrdenesProduccion = () => {
 	const estadosUnicos = estadosDisponibles;
 	const operariosUnicos = operariosDisponibles;
 
+	// Obtener unidad de medida del producto
+	const obtenerUnidadMedida = (idProducto) => {
+		const producto = productos.find(p => p.id_producto === idProducto);
+		return producto ? producto.unidad_medida : "Unidades";
+	};
+
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
 		const colores = {
@@ -177,7 +200,6 @@ const VerOrdenesProduccion = () => {
 
 		setCancelando(true);
 		try {
-			// Aquí iría la llamada al backend cuando tengas el endpoint
 			console.log("Cancelando orden:", {
 				ordenId: ordenSeleccionada.id,
 				razon: razonCancelacion,
@@ -186,13 +208,6 @@ const VerOrdenesProduccion = () => {
 
 			// Simular llamada API
 			await new Promise(resolve => setTimeout(resolve, 1500));
-
-			// En un caso real, aquí harías:
-			// const response = await fetch(`/api/produccion/ordenes/${ordenSeleccionada.id}/cancelar/`, {
-			//   method: 'POST',
-			//   headers: { 'Content-Type': 'application/json' },
-			//   body: JSON.stringify({ razon: razonCancelacion })
-			// });
 
 			alert(`Orden #${ordenSeleccionada.id} cancelada exitosamente\nRazón: ${razonCancelacion}`);
 			
@@ -206,6 +221,127 @@ const VerOrdenesProduccion = () => {
 			alert("Error al cancelar la orden. Por favor, intenta nuevamente.");
 		} finally {
 			setCancelando(false);
+		}
+	};
+
+	// Función para abrir el modal de desperdicio
+	const abrirModalDesperdicio = (orden) => {
+		setOrdenSeleccionada(orden);
+		setCantidadDesperdicio(0);
+		setModalDesperdicioAbierto(true);
+	};
+
+	// Función para cerrar el modal de desperdicio
+	const cerrarModalDesperdicio = () => {
+		setModalDesperdicioAbierto(false);
+		setOrdenSeleccionada(null);
+		setCantidadDesperdicio(0);
+		setRegistrandoDesperdicio(false);
+	};
+
+	// Función para manejar el registro de desperdicio
+	const manejarRegistrarDesperdicio = async () => {
+		if (cantidadDesperdicio <= 0) {
+			alert("La cantidad de desperdicio debe ser mayor a 0");
+			return;
+		}
+
+		if (cantidadDesperdicio > ordenSeleccionada.cantidad) {
+			alert("La cantidad de desperdicio no puede ser mayor a la cantidad total de la orden");
+			return;
+		}
+
+		setRegistrandoDesperdicio(true);
+		try {
+			console.log("Registrando desperdicio:", {
+				ordenId: ordenSeleccionada.id,
+				productoId: ordenSeleccionada.id_producto,
+				cantidad: cantidadDesperdicio,
+				unidadMedida: obtenerUnidadMedida(ordenSeleccionada.id_producto),
+				fecha: new Date().toISOString()
+			});
+
+			// Simular llamada API
+			await new Promise(resolve => setTimeout(resolve, 1500));
+
+			alert(`Desperdicio registrado exitosamente\nCantidad: ${cantidadDesperdicio} ${obtenerUnidadMedida(ordenSeleccionada.id_producto)}`);
+			
+			// Recargar las órdenes para reflejar el cambio
+			await obtenerOrdenes(paginacion.currentPage);
+			
+			cerrarModalDesperdicio();
+			
+		} catch (error) {
+			console.error("Error al registrar desperdicio:", error);
+			alert("Error al registrar desperdicio. Por favor, intenta nuevamente.");
+		} finally {
+			setRegistrandoDesperdicio(false);
+		}
+	};
+
+	// Función para abrir el modal de control de calidad
+	const abrirModalControlCalidad = (orden) => {
+		setOrdenSeleccionada(orden);
+		setDatosControlCalidad({
+			observaciones: "",
+			aprobado: true,
+			cantidadAprobada: orden.cantidad
+		});
+		setModalControlCalidadAbierto(true);
+	};
+
+	// Función para cerrar el modal de control de calidad
+	const cerrarModalControlCalidad = () => {
+		setModalControlCalidadAbierto(false);
+		setOrdenSeleccionada(null);
+		setDatosControlCalidad({
+			observaciones: "",
+			aprobado: true,
+			cantidadAprobada: 0
+		});
+		setRegistrandoControlCalidad(false);
+	};
+
+	// Función para manejar el registro de control de calidad
+	const manejarRegistrarControlCalidad = async () => {
+		if (datosControlCalidad.cantidadAprobada < 0) {
+			alert("La cantidad aprobada no puede ser negativa");
+			return;
+		}
+
+		if (datosControlCalidad.cantidadAprobada > ordenSeleccionada.cantidad) {
+			alert("La cantidad aprobada no puede ser mayor a la cantidad total de la orden");
+			return;
+		}
+
+		setRegistrandoControlCalidad(true);
+		try {
+			console.log("Registrando control de calidad:", {
+				ordenId: ordenSeleccionada.id,
+				productoId: ordenSeleccionada.id_producto,
+				aprobado: datosControlCalidad.aprobado,
+				cantidadAprobada: datosControlCalidad.cantidadAprobada,
+				observaciones: datosControlCalidad.observaciones,
+				unidadMedida: obtenerUnidadMedida(ordenSeleccionada.id_producto),
+				fecha: new Date().toISOString()
+			});
+
+			// Simular llamada API
+			await new Promise(resolve => setTimeout(resolve, 1500));
+
+			const estado = datosControlCalidad.aprobado ? "APROBADO" : "RECHAZADO";
+			alert(`Control de calidad registrado exitosamente\nEstado: ${estado}\nCantidad Aprobada: ${datosControlCalidad.cantidadAprobada} ${obtenerUnidadMedida(ordenSeleccionada.id_producto)}`);
+			
+			// Recargar las órdenes para reflejar el cambio
+			await obtenerOrdenes(paginacion.currentPage);
+			
+			cerrarModalControlCalidad();
+			
+		} catch (error) {
+			console.error("Error al registrar control de calidad:", error);
+			alert("Error al registrar control de calidad. Por favor, intenta nuevamente.");
+		} finally {
+			setRegistrandoControlCalidad(false);
 		}
 	};
 
@@ -450,10 +586,16 @@ const VerOrdenesProduccion = () => {
 
 								{orden.estado === "Finalizada" ? (
 									<>
-										<button className={styles.btnDesperdicio}>
+										<button 
+											className={styles.btnDesperdicio}
+											onClick={() => abrirModalDesperdicio(orden)}
+										>
 											Desperdicio
 										</button>
-										<button className={styles.btnControlCalidad}>
+										<button 
+											className={styles.btnControlCalidad}
+											onClick={() => abrirModalControlCalidad(orden)}
+										>
 											Control de Calidad
 										</button>
 									</>
@@ -558,6 +700,200 @@ const VerOrdenesProduccion = () => {
 								</>
 							) : (
 								'Confirmar Cancelación'
+							)}
+						</button>
+					</div>
+				</div>
+			</Modal>
+
+			{/* Modal de Desperdicio */}
+			<Modal
+				isOpen={modalDesperdicioAbierto}
+				onRequestClose={cerrarModalDesperdicio}
+				className={styles.modal}
+				overlayClassName={styles.overlay}
+				contentLabel="Registrar Desperdicio"
+			>
+				<div className={styles.modalContent}>
+					<h2 className={styles.modalTitulo}>Registrar Desperdicio</h2>
+					
+					{ordenSeleccionada && (
+						<div className={styles.modalInfo}>
+							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
+							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
+							<p><strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad} unidades</p>
+						</div>
+					)}
+
+					<div className={styles.modalForm}>
+						<label htmlFor="cantidadDesperdicio" className={styles.modalLabel}>
+							Cantidad de Desperdicio *
+						</label>
+						<div className={styles.inputGroup}>
+							<input
+								type="number"
+								id="cantidadDesperdicio"
+								value={cantidadDesperdicio}
+								onChange={(e) => setCantidadDesperdicio(Number(e.target.value))}
+								className={styles.modalInput}
+								min="0"
+								max={ordenSeleccionada?.cantidad || 0}
+								required
+							/>
+							<span className={styles.unidadMedida}>
+								{ordenSeleccionada ? obtenerUnidadMedida(ordenSeleccionada.id_producto) : "Unidades"}
+							</span>
+						</div>
+						<small className={styles.modalHelp}>
+							Ingresa la cantidad de producto que se ha desperdiciado.
+						</small>
+					</div>
+
+					<div className={styles.modalActions}>
+						<button
+							onClick={cerrarModalDesperdicio}
+							className={styles.btnModalCancelar}
+							disabled={registrandoDesperdicio}
+						>
+							Cancelar
+						</button>
+						<button
+							onClick={manejarRegistrarDesperdicio}
+							className={styles.btnModalConfirmar}
+							disabled={registrandoDesperdicio || cantidadDesperdicio <= 0}
+						>
+							{registrandoDesperdicio ? (
+								<>
+									<div className={styles.spinnerSmall}></div>
+									Registrando...
+								</>
+							) : (
+								'Registrar Desperdicio'
+							)}
+						</button>
+					</div>
+				</div>
+			</Modal>
+
+			{/* Modal de Control de Calidad */}
+			<Modal
+				isOpen={modalControlCalidadAbierto}
+				onRequestClose={cerrarModalControlCalidad}
+				className={styles.modal}
+				overlayClassName={styles.overlay}
+				contentLabel="Control de Calidad"
+			>
+				<div className={styles.modalContent}>
+					<h2 className={styles.modalTitulo}>Control de Calidad</h2>
+					
+					{ordenSeleccionada && (
+						<div className={styles.modalInfo}>
+							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
+							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
+							<p><strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad} unidades</p>
+						</div>
+					)}
+
+					<div className={styles.modalForm}>
+						<div className={styles.formGroup}>
+							<label className={styles.modalLabel}>
+								Estado de Calidad
+							</label>
+							<div className={styles.radioGroup}>
+								<label className={styles.radioLabel}>
+									<input
+										type="radio"
+										value="true"
+										checked={datosControlCalidad.aprobado}
+										onChange={(e) => setDatosControlCalidad({
+											...datosControlCalidad,
+											aprobado: e.target.value === "true"
+										})}
+										className={styles.radioInput}
+									/>
+									<span className={styles.radioCustom}></span>
+									Aprobado
+								</label>
+								<label className={styles.radioLabel}>
+									<input
+										type="radio"
+										value="false"
+										checked={!datosControlCalidad.aprobado}
+										onChange={(e) => setDatosControlCalidad({
+											...datosControlCalidad,
+											aprobado: e.target.value === "true"
+										})}
+										className={styles.radioInput}
+									/>
+									<span className={styles.radioCustom}></span>
+									Rechazado
+								</label>
+							</div>
+						</div>
+
+						<div className={styles.formGroup}>
+							<label htmlFor="cantidadAprobada" className={styles.modalLabel}>
+								Cantidad Aprobada *
+							</label>
+							<div className={styles.inputGroup}>
+								<input
+									type="number"
+									id="cantidadAprobada"
+									value={datosControlCalidad.cantidadAprobada}
+									onChange={(e) => setDatosControlCalidad({
+										...datosControlCalidad,
+										cantidadAprobada: Number(e.target.value)
+									})}
+									className={styles.modalInput}
+									min="0"
+									max={ordenSeleccionada?.cantidad || 0}
+									
+									required
+								/>
+								<span className={styles.unidadMedida}>
+									{ordenSeleccionada ? obtenerUnidadMedida(ordenSeleccionada.id_producto) : "Unidades"}
+								</span>
+							</div>
+						</div>
+
+						<div className={styles.formGroup}>
+							<label htmlFor="observaciones" className={styles.modalLabel}>
+								Observaciones
+							</label>
+							<textarea
+								id="observaciones"
+								value={datosControlCalidad.observaciones}
+								onChange={(e) => setDatosControlCalidad({
+									...datosControlCalidad,
+									observaciones: e.target.value
+								})}
+								className={styles.modalTextarea}
+								placeholder="Ingresa observaciones sobre la calidad del producto..."
+								rows={3}
+							/>
+						</div>
+					</div>
+
+					<div className={styles.modalActions}>
+						<button
+							onClick={cerrarModalControlCalidad}
+							className={styles.btnModalCancelar}
+							disabled={registrandoControlCalidad}
+						>
+							Cancelar
+						</button>
+						<button
+							onClick={manejarRegistrarControlCalidad}
+							className={styles.btnModalConfirmar}
+							disabled={registrandoControlCalidad || datosControlCalidad.cantidadAprobada < 0}
+						>
+							{registrandoControlCalidad ? (
+								<>
+									<div className={styles.spinnerSmall}></div>
+									Registrando...
+								</>
+							) : (
+								'Registrar Control'
 							)}
 						</button>
 					</div>
