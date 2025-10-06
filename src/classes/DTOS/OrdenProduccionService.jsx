@@ -26,9 +26,9 @@ class OrdenProduccionService {
 			fecha_inicio: datosBackend.fecha_inicio || "Sin fecha",
 
 			// Personal
-			operario: `${datosBackend.id_operario.nombre || "Sin nombre"} ${datosBackend.id_operario.apellido || "Sin apellido"}`,
-			id_operario: datosBackend.id_operario.id_operario || null,
-			supervisor: `${datosBackend.id_supervisor.nombre || "Sin nombre"} ${datosBackend.id_supervisor.apellido || "Sin apellido"}`,
+			operario: `${datosBackend.id_operario?.nombre || "Sin nombre"} ${datosBackend.id_operario?.apellido || "Sin apellido"}`,
+			id_operario: datosBackend.id_operario?.id_operario || null,
+			supervisor: `${datosBackend.id_supervisor?.nombre || "Sin nombre"} ${datosBackend.id_supervisor?.apellido || "Sin apellido"}`,
 
 			// Información adicional del lote
 			id_lote_produccion: datosBackend.id_lote_produccion?.id_lote_produccion || null,
