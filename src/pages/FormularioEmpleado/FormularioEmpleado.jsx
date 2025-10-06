@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as faceapi from "face-api.js";
+import styles from './FormularioEmpleado.module.css';
 
-export default function FormularioEmpleado() {
+const FormularioEmpleado = () => {
 	const navigate = useNavigate();
 	const [form, setForm] = useState({
 		usuario: "",
@@ -83,18 +84,23 @@ export default function FormularioEmpleado() {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const departamentosData = await traerDepartamentos();
-				const rolesData = await traerRoles();
-				const turnosData = await traerTurnos();
+				const [departamentosData, rolesData, turnosData] = await Promise.all([
+					traerDepartamentos(),
+					traerRoles(),
+					traerTurnos()
+				]);
 
 				setDepartamentos(departamentosData);
 				setRoles(rolesData);
 				setTurnos(turnosData);
+				
+				await loadFaceApiModels();
+				await startVideo();
+				
 				setCargando(false);
-
-				loadFaceApiModels().then(() => startVideo());
 			} catch (error) {
-				console.error(error);
+				console.error("Error cargando datos:", error);
+				setCargando(false);
 			}
 		};
 
@@ -106,32 +112,37 @@ export default function FormularioEmpleado() {
 			const response = await fetch(
 				"https://frozenback-test.up.railway.app/api/empleados/departamentos/"
 			);
-			const departamentos = await response.json();
-			return departamentos.results;
+			const data = await response.json();
+			return data.results || [];
 		} catch (error) {
-			console.log(error);
+			console.error("Error fetching departamentos:", error);
+			return [];
 		}
 	};
+	
 	const traerRoles = async () => {
 		try {
 			const response = await fetch(
 				"https://frozenback-test.up.railway.app/api/empleados/roles/"
 			);
-			const roles = await response.json();
-			return roles.results;
+			const data = await response.json();
+			return data.results || [];
 		} catch (error) {
-			console.log(error);
+			console.error("Error fetching roles:", error);
+			return [];
 		}
 	};
+	
 	const traerTurnos = async () => {
 		try {
 			const response = await fetch(
 				"https://frozenback-test.up.railway.app/api/empleados/turnos/"
 			);
-			const turnos = await response.json();
-			return turnos.results;
+			const data = await response.json();
+			return data.results || [];
 		} catch (error) {
-			console.log(error);
+			console.error("Error fetching turnos:", error);
+			return [];
 		}
 	};
 
@@ -267,221 +278,201 @@ export default function FormularioEmpleado() {
 		window.location.reload();
 	};
 
-	return (
-		<>
-			{cargando ? (
-				<p>Cargando...</p>
-			) : (
-				<div className="min-h-screen flex flex-col">
-					{/* Header */}
-					<header className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-4 text-center shadow-md relative">
-						<button
-							onClick={handleVolver}
-							className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white text-blue-900 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								className="h-5 w-5 mr-2"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M10 19l-7-7m0 0l7-7m-7 7h18"
-								/>
-							</svg>
-							Volver
-						</button>
-						<h1 className="text-2xl font-semibold">Registro de Empleado</h1>
-					</header>
+	// Loader idéntico al componente Ventas
+	if (cargando) return (
+		<div className={styles.loading}>
+			<div className={styles.spinner}></div>
+			<p>Cargando formulario...</p>
+		</div>
+	);
 
-					{/* Contenido */}
-					<main className="flex-grow flex items-center justify-center bg-gray-100 p-6">
-						<form
-							onSubmit={handleSubmit}
-							className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-lg"
-						>
-							{/* Campos de formulario */}
-							{[
-								{
-									label: "Nombre",
-									name: "nombre",
-									placeholder: "Ingrese el nombre",
-								},
-								{
-									label: "Apellido",
-									name: "apellido",
-									placeholder: "Ingrese el apellido",
-								},
-								{
-									label: "Username",
-									name: "usuario",
-									placeholder: "Ingrese el usuario",
-								},
-							].map((field) => (
-								<div key={field.name} className="mb-4">
-									<label className="block text-gray-700 font-medium mb-2">
-										{field.label}
-									</label>
-									<input
-										type="text"
-										name={field.name}
-										value={form[field.name]}
-										onChange={handleChange}
-										className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-										placeholder={field.placeholder}
-									/>
-									{errors[field.name] && (
-										<p className="text-red-500 text-sm">{errors[field.name]}</p>
-									)}
-								</div>
-							))}
-							{/* Password */}
-							<div className="mb-6">
-								<label className="block text-gray-700 font-medium mb-2">
-									Password
-								</label>
+	return (
+		<div className={styles.container}>
+			{/* Header sin botón volver */}
+			<div className={styles.headerContainer}>
+				<h1 className={styles.title}>Registro de Empleado</h1>
+			</div>
+
+			{/* Contenido */}
+			<main className={styles.mainContent}>
+				<form onSubmit={handleSubmit} className={styles.formContainer}>
+					{/* Sección de información personal y credenciales */}
+					<div className={styles.formSection}>
+						<h3 className={styles.sectionTitle}>Información Personal</h3>
+						<div className={styles.formGrid}>
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Nombre</label>
+								<input
+									type="text"
+									name="nombre"
+									value={form.nombre}
+									onChange={handleChange}
+									className={styles.input}
+									placeholder="Ingrese el nombre"
+								/>
+								{errors.nombre && (
+									<p className={styles.errorText}>{errors.nombre}</p>
+								)}
+							</div>
+
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Apellido</label>
+								<input
+									type="text"
+									name="apellido"
+									value={form.apellido}
+									onChange={handleChange}
+									className={styles.input}
+									placeholder="Ingrese el apellido"
+								/>
+								{errors.apellido && (
+									<p className={styles.errorText}>{errors.apellido}</p>
+								)}
+							</div>
+
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Username</label>
+								<input
+									type="text"
+									name="usuario"
+									value={form.usuario}
+									onChange={handleChange}
+									className={styles.input}
+									placeholder="Ingrese el usuario"
+								/>
+								{errors.usuario && (
+									<p className={styles.errorText}>{errors.usuario}</p>
+								)}
+							</div>
+
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Password</label>
 								<input
 									type="password"
 									name="contrasena"
 									value={form.contrasena}
 									onChange={handleChange}
-									className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+									className={styles.input}
 									placeholder="Ingrese la contraseña"
 								/>
 								{errors.contrasena && (
-									<p className="text-red-500 text-sm">{errors.contrasena}</p>
+									<p className={styles.errorText}>{errors.contrasena}</p>
 								)}
 							</div>
+						</div>
+					</div>
 
-							{/* Rol */}
-							<div className="mb-4">
-								<label className="block text-gray-700 font-medium mb-2">
-									Rol
-								</label>
+					{/* Sección de configuración laboral */}
+					<div className={styles.formSection}>
+						<h3 className={styles.sectionTitle}>Configuración Laboral</h3>
+						<div className={styles.formGrid}>
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Rol</label>
 								<select
 									name="id_rol"
 									value={form.id_rol}
 									onChange={handleChange}
-									className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									className={styles.select}
 								>
-									{roles.map((e) => {
-										return (
-											<option key={e.id_rol} value={Number(e.id_rol)}>
-												{e.descripcion}
-											</option>
-										);
-									})}
+									{roles.map((e) => (
+										<option key={e.id_rol} value={Number(e.id_rol)}>
+											{e.descripcion}
+										</option>
+									))}
 								</select>
 							</div>
-							{/* Rol */}
 
-							{/* Departamento */}
-							<div className="mb-4">
-								<label className="block text-gray-700 font-medium mb-2">
-									Departamento
-								</label>
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Departamento</label>
 								<select
 									name="id_departamento"
 									value={form.id_departamento}
 									onChange={handleChange}
-									className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									className={styles.select}
 								>
-									{departamentos.map((e) => {
-										return (
-											<option
-												key={e.id_departamento}
-												value={Number(e.id_departamento)}
-											>
-												{e.descripcion}
-											</option>
-										);
-									})}
+									{departamentos.map((e) => (
+										<option key={e.id_departamento} value={Number(e.id_departamento)}>
+											{e.descripcion}
+										</option>
+									))}
 								</select>
 							</div>
-							{/* Departamento */}
 
-							{/* Turno */}
-							<div className="mb-4">
-								<label className="block text-gray-700 font-medium mb-2">
-									Turno
-								</label>
+							<div className={styles.inputGroup}>
+								<label className={styles.label}>Turno</label>
 								<select
 									name="id_turno"
-									value={form.turno}
+									value={form.id_turno}
 									onChange={handleChange}
-									className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									className={styles.select}
 								>
-									{turnos.map((e) => {
-										return (
-											<option key={e.id_turno} value={Number(e.id_turno)}>
-												{e.descripcion}
-											</option>
-										);
-									})}
+									{turnos.map((e) => (
+										<option key={e.id_turno} value={Number(e.id_turno)}>
+											{e.descripcion}
+										</option>
+									))}
 								</select>
 							</div>
+						</div>
+					</div>
 
-							{/* Turno */}
-
-							{/* Cámara */}
-							<div className="mb-6">
-								<label className="block text-gray-700 font-medium mb-2">
-									Registro Facial
-								</label>
+					{/* Sección de cámara - Más ancha y con mejor proporción */}
+					<div className={styles.formSection}>
+						<h3 className={styles.sectionTitle}>Registro Facial</h3>
+						<div className={styles.cameraSection}>
+							<div className={styles.videoContainer}>
 								<video
 									ref={videoRef}
 									autoPlay
 									muted
-									width="100%"
-									className="rounded-lg border border-gray-300"
+									className={styles.video}
 								></video>
+							</div>
+							<div className={styles.cameraButtons}>
 								<button
 									type="button"
 									onClick={captureFace}
-									className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+									className={styles.captureButton}
 								>
 									Capturar Rostro
 								</button>
-								{errors.rostro && (
-									<p className="text-red-500 text-sm">{errors.rostro}</p>
-								)}
-								{successMessage && (
-									<p className="text-green-500 text-sm mt-2">
-										{successMessage}
-									</p>
-								)}
-
-								{analizandoRostro && (
-									<p className="text-blue-500 text-sm mt-2">
-										Analizando rostro...
-									</p>
-								)}
 							</div>
+							{errors.rostro && (
+								<p className={styles.errorText}>{errors.rostro}</p>
+							)}
+							{successMessage && (
+								<p className={styles.successText}>
+									{successMessage}
+								</p>
+							)}
+							{analizandoRostro && (
+								<p className={styles.analyzingText}>
+									Analizando rostro...
+								</p>
+							)}
+						</div>
+					</div>
 
-							{/* Botones de acción */}
-							<div className="flex gap-4">
-								<button
-									type="button"
-									onClick={handleVolver}
-									className="w-1/3 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition"
-								>
-									Volver
-								</button>
-								<button
-									type="submit"
-									className="w-2/3 bg-blue-700 text-white py-2 rounded-lg hover:bg-blue-800 transition"
-								>
-									Registrar
-								</button>
-							</div>
-						</form>
-					</main>
-				</div>
-			)}
-		</>
+					{/* Botones de acción */}
+					<div className={styles.buttonsContainer}>
+						<button
+							type="button"
+							onClick={handleVolver}
+							className={styles.secondaryButton}
+						>
+							Volver
+						</button>
+						<button
+							type="submit"
+							className={styles.primaryButton}
+						>
+							Registrar Empleado
+						</button>
+					</div>
+				</form>
+			</main>
+		</div>
 	);
 }
+
+export default FormularioEmpleado;
