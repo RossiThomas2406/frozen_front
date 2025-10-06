@@ -12,14 +12,12 @@ const VerOrdenesProduccion = () => {
 	const [filtroEstado, setFiltroEstado] = useState("todos");
 	const [filtroOperario, setFiltroOperario] = useState("todos");
 
-	
-
 	useEffect(() => {
 		const obtenerOrdenes = async () => {
 			try {
-
-				const {url, todasLasOrdenes} = await OrdenProduccionService.obtenerTodasLasOrdenes();
-				console.log(todasLasOrdenes)
+				const { url, todasLasOrdenes } =
+					await OrdenProduccionService.obtenerTodasLasOrdenes();
+				console.log(todasLasOrdenes);
 				setPaginacion(url);
 				setOrdenes(todasLasOrdenes);
 				setOrdenesFiltradas(todasLasOrdenes);
@@ -35,7 +33,9 @@ const VerOrdenesProduccion = () => {
 	}, []);
 
 	async function fetchData(url) {
-		const response = await fetch("https://frozenback-test.up.railway.app/api/produccion/ordenes/");
+		const response = await fetch(
+			"https://frozenback-test.up.railway.app/api/produccion/ordenes/"
+		);
 		if (!response.ok) {
 			throw new Error("Error al obtener datos");
 		}
@@ -43,9 +43,18 @@ const VerOrdenesProduccion = () => {
 	}
 
 	// Obtener listas únicas para los filtros
- const productosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.producto))];
-  const estadosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.estado))];
-  const operariosUnicos = ['todos', ...new Set(ordenes.map(orden => orden.operario))];
+	const productosUnicos = [
+		"todos",
+		...new Set(ordenes.map((orden) => orden.producto)),
+	];
+	const estadosUnicos = [
+		"todos",
+		...new Set(ordenes.map((orden) => orden.estado)),
+	];
+	const operariosUnicos = [
+		"todos",
+		...new Set(ordenes.map((orden) => orden.operario)),
+	];
 
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
@@ -239,8 +248,24 @@ const VerOrdenesProduccion = () => {
 							</div>
 
 							<div className={styles.cardFooter}>
-								<button className={styles.btnEditar}>Editar</button>
-								<button className={styles.btnEliminar}>Eliminar</button>
+								{orden.estado === "En espera" ? (
+									<button className={styles.btnIniciar}>Iniciar</button>
+								) : null}
+
+								{orden.estado === "En proceso" ? (
+									<button className={styles.btnFinalizar}>Finalizar</button>
+								) : null}
+
+								{orden.estado === "Finalizada" ? (
+									<>
+										<button className={styles.btnDesperdicio}>
+											Desperdicio
+										</button>
+										<button className={styles.btnControlCalidad}>
+											Control de Calidad
+										</button>
+									</>
+								) : null}
 							</div>
 						</div>
 					))

@@ -88,7 +88,7 @@
 .listaOrdenes {
 	display: grid;
 	gap: 20px;
-	max-width: 1200px;
+	max-width: 1600px;
 	margin: 0 auto;
 	grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 }
@@ -174,8 +174,8 @@
 	gap: 10px;
 }
 
-.btnEditar {
-	background-color: #3498db;
+.btnIniciar {
+	background-color: rgb(40, 167, 69);
 	color: white;
 	border: none;
 	padding: 10px 20px;
@@ -187,12 +187,12 @@
 	flex: 1;
 }
 
-.btnEditar:hover {
-	background-color: #2980b9;
+.btnIniciar:hover {
+	background-color: rgb(33, 136, 56);
 	transform: translateY(-1px);
 }
 
-.btnEliminar {
+.btnFinalizar {
 	background-color: #e74c3c;
 	color: white;
 	border: none;
@@ -205,11 +205,23 @@
 	flex: 1;
 }
 
-.btnEliminar:hover {
+.btnFinalizar:hover {
 	background-color: #c0392b;
 	transform: translateY(-1px);
 }
 
+.btnDesperdicio{
+	background-color: #e74c3c;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9em;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	flex: 1;
+}
 .cargando,
 .error {
 	text-align: center;
