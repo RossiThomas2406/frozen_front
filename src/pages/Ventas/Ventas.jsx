@@ -16,6 +16,7 @@ const Ventas = () => {
   const [nuevoProducto, setNuevoProducto] = useState({ id_producto: '', cantidad: 1 });
   const [fechaEntregaEdit, setFechaEntregaEdit] = useState('');
   const [prioridadEdit, setPrioridadEdit] = useState('');
+  const [fechaOriginal, setFechaOriginal] = useState('');
 
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -96,12 +97,11 @@ const Ventas = () => {
   // Función para generar números de página a mostrar
   const obtenerNumerosPagina = () => {
     const paginas = [];
-    const paginasAMostrar = 5; // Número máximo de páginas a mostrar en el paginador
+    const paginasAMostrar = 5;
     
     let inicio = Math.max(1, paginaActual - Math.floor(paginasAMostrar / 2));
     let fin = Math.min(totalPaginas, inicio + paginasAMostrar - 1);
     
-    // Ajustar inicio si estamos cerca del final
     if (fin - inicio + 1 < paginasAMostrar) {
       inicio = Math.max(1, fin - paginasAMostrar + 1);
     }
@@ -192,7 +192,6 @@ const Ventas = () => {
   const iniciarEdicion = (orden) => {
     setEditando(orden.id_orden_venta);
     
-    // Agregar un id único temporal para cada producto
     const productosParaEditar = (orden.productos || []).map((p, index) => ({
       id_producto: p.producto?.id_producto || p.id_producto,
       producto: p.producto?.nombre || p.producto || 'Producto sin nombre',
@@ -203,9 +202,11 @@ const Ventas = () => {
     }));
     
     setProductosEdit(productosParaEditar);
-    setFechaEntregaEdit(formatFechaParaInput(orden.fecha_entrega));
     
-    // Usar el ID de prioridad directamente del objeto
+    const fechaEditValue = formatFechaParaInput(orden.fecha_entrega);
+    setFechaEntregaEdit(fechaEditValue);
+    setFechaOriginal(fechaEditValue);
+    
     setPrioridadEdit(orden.prioridad?.id_prioridad?.toString() || '');
     
     setNuevoProducto({ id_producto: '', cantidad: 1 });
@@ -215,6 +216,7 @@ const Ventas = () => {
     setEditando(null);
     setProductosEdit([]);
     setFechaEntregaEdit('');
+    setFechaOriginal('');
     setPrioridadEdit('');
     setNuevoProducto({ id_producto: '', cantidad: 1 });
   };
@@ -255,7 +257,6 @@ const Ventas = () => {
       return;
     }
 
-    // Verificar que el producto no esté ya en la lista (doble verificación)
     const yaExiste = productosEdit.some(
       p => p.id_producto === productoSeleccionado.id_producto
     );
@@ -278,80 +279,98 @@ const Ventas = () => {
     setNuevoProducto({ id_producto: '', cantidad: 1 });
   };
 
-  const guardarCambios = async () => {
-    if (!editando) return;
+const guardarCambios = async () => {
+  if (!editando) return;
 
-    try {
-      setGuardando(true);
-      
-      const productosValidos = productosEdit
-        .map(p => ({
-          id_producto: parseInt(p.id_producto),
-          cantidad: parseInt(p.cantidad)
-        }))
-        .filter(p => p.cantidad > 0);
-
-      if (productosValidos.length === 0) {
-        alert('La orden debe tener al menos un producto con cantidad mayor a 0');
-        return;
-      }
-
-      // Preparar datos para la actualización
-      const datosActualizacion = {
-        id_orden_venta: editando,
-        productos: productosValidos
-      };
-
-      // Agregar fecha_entrega si se modificó
-      if (fechaEntregaEdit) {
-        const fechaObj = new Date(fechaEntregaEdit);
-        const fechaFormateada = fechaObj.toISOString().slice(0, 19).replace('T', ' ');
-        datosActualizacion.fecha_entrega = fechaFormateada;
-      } else {
-        datosActualizacion.fecha_entrega = null;
-      }
-
-      // Agregar id_prioridad si se seleccionó
-      if (prioridadEdit) {
-        datosActualizacion.id_prioridad = parseInt(prioridadEdit);
-      }
-
-      await axios.put(
-        'https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/actualizar/',
-        datosActualizacion,
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-
-      // Recargar la página actual para reflejar los cambios
-      await fetchOrdenes(paginaActual);
-      
-      cancelarEdicion();
-      alert('Orden actualizada correctamente');
-      
-    } catch (err) {
-      const mensaje = err.response?.data 
-        ? `Error ${err.response.status}: ${JSON.stringify(err.response.data)}` 
-        : 'Error de conexión';
-      alert(mensaje);
-      console.error('Error guardando cambios:', err);
-    } finally {
+  try {
+    setGuardando(true);
+    
+    // Validar que la fecha de entrega no esté vacía
+    if (!fechaEntregaEdit.trim()) {
+      alert('La fecha de entrega estimada es obligatoria');
       setGuardando(false);
+      return;
     }
-  };
+
+    // SOLUCIÓN: Solo validar si la fecha fue modificada
+    const fechaModificada = fechaEntregaEdit !== fechaOriginal;
+    
+    if (fechaModificada && fechaEntregaEdit && fechaOriginal) {
+      const fechaOriginalObj = new Date(fechaOriginal);
+      const fechaNuevaObj = new Date(fechaEntregaEdit);
+      
+      // Solo validar si ambas fechas son válidas
+      if (!isNaN(fechaOriginalObj.getTime()) && !isNaN(fechaNuevaObj.getTime())) {
+        if (fechaNuevaObj <= fechaOriginalObj) {
+          alert('La nueva fecha de entrega debe ser mayor a la fecha original');
+          setGuardando(false);
+          return;
+        }
+      }
+    }
+
+    const productosValidos = productosEdit
+      .map(p => ({
+        id_producto: parseInt(p.id_producto),
+        cantidad: parseInt(p.cantidad)
+      }))
+      .filter(p => p.cantidad > 0);
+
+    if (productosValidos.length === 0) {
+      alert('La orden debe tener al menos un producto con cantidad mayor a 0');
+      setGuardando(false);
+      return;
+    }
+
+    // Preparar datos para la actualización
+    const datosActualizacion = {
+      id_orden_venta: editando,
+      productos: productosValidos
+    };
+
+    // Agregar fecha_entrega (obligatoria)
+    const fechaObj = new Date(fechaEntregaEdit);
+    const fechaFormateada = fechaObj.toISOString().slice(0, 19).replace('T', ' ');
+    datosActualizacion.fecha_entrega = fechaFormateada;
+
+    // Agregar id_prioridad si se seleccionó
+    if (prioridadEdit) {
+      datosActualizacion.id_prioridad = parseInt(prioridadEdit);
+    }
+
+    await axios.put(
+      'https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/actualizar/',
+      datosActualizacion,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    // Recargar la página actual para reflejar los cambios
+    await fetchOrdenes(paginaActual);
+    
+    cancelarEdicion();
+    alert('Orden actualizada correctamente');
+    
+  } catch (err) {
+    const mensaje = err.response?.data 
+      ? `Error ${err.response.status}: ${JSON.stringify(err.response.data)}` 
+      : 'Error de conexión';
+    alert(mensaje);
+    console.error('Error guardando cambios:', err);
+  } finally {
+    setGuardando(false);
+  }
+};
 
   // Función para manejar el click en la orden
   const handleOrdenClick = (orden, event) => {
-    // Prevenir que se active si se hace click en un botón dentro de la orden
     if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
       return;
     }
     
-    // Si ya está en edición, no hacer nada
     if (editando === orden.id_orden_venta) {
       return;
     }
     
-    // Iniciar edición al hacer click en la orden
     iniciarEdicion(orden);
   };
 
@@ -461,7 +480,7 @@ const Ventas = () => {
                     <h4>Fecha de Entrega Estimada:</h4>
                     <div className={styles.inputGrupo}>
                       <label htmlFor={`fecha-entrega-${orden.id_orden_venta}`}>
-                        Fecha y Hora de Entrega:
+                        Fecha y Hora de Entrega: *
                       </label>
                       <input
                         id={`fecha-entrega-${orden.id_orden_venta}`}
@@ -469,19 +488,25 @@ const Ventas = () => {
                         value={fechaEntregaEdit}
                         onChange={(e) => setFechaEntregaEdit(e.target.value)}
                         className={styles.inputFecha}
+                        required
+                        min={fechaOriginal}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setFechaEntregaEdit('')}
-                        className={styles.botonLimpiarFecha}
-                        title="Eliminar fecha de entrega"
-                      >
-                        ×
-                      </button>
                     </div>
-                    <small className={styles.fechaHelp}>
-                      Dejar vacío si no hay fecha de entrega estimada
-                    </small>
+                    <div className={styles.fechaInfoContainer}>
+                      {fechaOriginal && (
+                        <small className={styles.fechaOriginalInfo}>
+                          Fecha original: {formatFecha(fechaOriginal.replace('T', ' '))}
+                        </small>
+                      )}
+                      {fechaEntregaEdit && 
+                      fechaEntregaEdit !== fechaOriginal && // SOLUCIÓN: Solo mostrar error si la fecha cambió
+                      fechaOriginal && 
+                      new Date(fechaEntregaEdit) <= new Date(fechaOriginal) && (
+                        <small className={styles.fechaError}>
+                          ⚠️ La nueva fecha debe ser mayor a la fecha original
+                        </small>
+                      )}
+                    </div>
                   </div>
 
                   <h3>Productos:</h3>
@@ -569,7 +594,17 @@ const Ventas = () => {
                   <div className={styles.botonesEdicion}>
                     <button
                       onClick={guardarCambios}
-                      disabled={guardando || productosEdit.filter(p => p.cantidad > 0).length === 0}
+                      disabled={
+                        guardando || 
+                        productosEdit.filter(p => p.cantidad > 0).length === 0 || 
+                        !fechaEntregaEdit.trim() || 
+                        (fechaEntregaEdit !== fechaOriginal && // SOLUCIÓN: Solo validar si la fecha cambió
+                        fechaEntregaEdit && 
+                        fechaOriginal && 
+                        !isNaN(new Date(fechaEntregaEdit).getTime()) && 
+                        !isNaN(new Date(fechaOriginal).getTime()) && 
+                        new Date(fechaEntregaEdit) <= new Date(fechaOriginal))
+                      }
                       className={styles.botonGuardar}
                     >
                       {guardando ? 'Guardando...' : 'Guardar'}

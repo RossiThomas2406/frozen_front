@@ -25,11 +25,6 @@ const FormularioEmpleado = () => {
 	const [analizandoRostro, setAnalizandoRostro] = useState(false);
 	const videoRef = useRef(null);
 
-	// Función para volver a la página anterior
-	const handleVolver = () => {
-		navigate(-1);
-	};
-
 	// Cargar modelos de face-api
 	const loadFaceApiModels = async () => {
 		const MODEL_URL = "/models";
@@ -288,63 +283,40 @@ const FormularioEmpleado = () => {
 
 	return (
 		<div className={styles.container}>
-			{/* Header sin botón volver */}
+			{/* Header sin botón de volver */}
 			<div className={styles.headerContainer}>
 				<h1 className={styles.title}>Registro de Empleado</h1>
 			</div>
 
-			{/* Contenido */}
+			{/* Contenido principal en diseño horizontal */}
 			<main className={styles.mainContent}>
 				<form onSubmit={handleSubmit} className={styles.formContainer}>
-					{/* Sección de información personal y credenciales */}
-					<div className={styles.formSection}>
-						<h3 className={styles.sectionTitle}>Información Personal</h3>
-						<div className={styles.formGrid}>
-							<div className={styles.inputGroup}>
-								<label className={styles.label}>Nombre</label>
-								<input
-									type="text"
-									name="nombre"
-									value={form.nombre}
-									onChange={handleChange}
-									className={styles.input}
-									placeholder="Ingrese el nombre"
-								/>
-								{errors.nombre && (
-									<p className={styles.errorText}>{errors.nombre}</p>
-								)}
-							</div>
-
-							<div className={styles.inputGroup}>
-								<label className={styles.label}>Apellido</label>
-								<input
-									type="text"
-									name="apellido"
-									value={form.apellido}
-									onChange={handleChange}
-									className={styles.input}
-									placeholder="Ingrese el apellido"
-								/>
-								{errors.apellido && (
-									<p className={styles.errorText}>{errors.apellido}</p>
-								)}
-							</div>
-
-							<div className={styles.inputGroup}>
-								<label className={styles.label}>Username</label>
-								<input
-									type="text"
-									name="usuario"
-									value={form.usuario}
-									onChange={handleChange}
-									className={styles.input}
-									placeholder="Ingrese el usuario"
-								/>
-								{errors.usuario && (
-									<p className={styles.errorText}>{errors.usuario}</p>
-								)}
-							</div>
-
+					<div className={styles.formGrid}>
+						{/* Columna 1: Información personal */}
+						<div className={styles.formColumn}>
+							<h3 className={styles.columnTitle}>Información Personal</h3>
+							
+							{[
+								{ label: "Nombre", name: "nombre", placeholder: "Ingrese el nombre" },
+								{ label: "Apellido", name: "apellido", placeholder: "Ingrese el apellido" },
+								{ label: "Username", name: "usuario", placeholder: "Ingrese el usuario" },
+							].map((field) => (
+								<div key={field.name} className={styles.inputGroup}>
+									<label className={styles.label}>{field.label}</label>
+									<input
+										type="text"
+										name={field.name}
+										value={form[field.name]}
+										onChange={handleChange}
+										className={styles.input}
+										placeholder={field.placeholder}
+									/>
+									{errors[field.name] && (
+										<p className={styles.errorText}>{errors[field.name]}</p>
+									)}
+								</div>
+							))}
+							
 							<div className={styles.inputGroup}>
 								<label className={styles.label}>Password</label>
 								<input
@@ -360,12 +332,11 @@ const FormularioEmpleado = () => {
 								)}
 							</div>
 						</div>
-					</div>
 
-					{/* Sección de configuración laboral */}
-					<div className={styles.formSection}>
-						<h3 className={styles.sectionTitle}>Configuración Laboral</h3>
-						<div className={styles.formGrid}>
+						{/* Columna 2: Configuración laboral */}
+						<div className={styles.formColumn}>
+							<h3 className={styles.columnTitle}>Configuración Laboral</h3>
+							
 							<div className={styles.inputGroup}>
 								<label className={styles.label}>Rol</label>
 								<select
@@ -414,21 +385,18 @@ const FormularioEmpleado = () => {
 								</select>
 							</div>
 						</div>
-					</div>
 
-					{/* Sección de cámara - Más ancha y con mejor proporción */}
-					<div className={styles.formSection}>
-						<h3 className={styles.sectionTitle}>Registro Facial</h3>
-						<div className={styles.cameraSection}>
-							<div className={styles.videoContainer}>
+						{/* Columna 3: Reconocimiento facial */}
+						<div className={styles.formColumn}>
+							<h3 className={styles.columnTitle}>Reconocimiento Facial</h3>
+							
+							<div className={styles.cameraSection}>
 								<video
 									ref={videoRef}
 									autoPlay
 									muted
 									className={styles.video}
 								></video>
-							</div>
-							<div className={styles.cameraButtons}>
 								<button
 									type="button"
 									onClick={captureFace}
@@ -436,32 +404,21 @@ const FormularioEmpleado = () => {
 								>
 									Capturar Rostro
 								</button>
+								{errors.rostro && (
+									<p className={styles.errorText}>{errors.rostro}</p>
+								)}
+								{successMessage && (
+									<p className={styles.successText}>{successMessage}</p>
+								)}
+								{analizandoRostro && (
+									<p className={styles.analyzingText}>Analizando rostro...</p>
+								)}
 							</div>
-							{errors.rostro && (
-								<p className={styles.errorText}>{errors.rostro}</p>
-							)}
-							{successMessage && (
-								<p className={styles.successText}>
-									{successMessage}
-								</p>
-							)}
-							{analizandoRostro && (
-								<p className={styles.analyzingText}>
-									Analizando rostro...
-								</p>
-							)}
 						</div>
 					</div>
 
-					{/* Botones de acción */}
+					{/* Solo botón de Registrar */}
 					<div className={styles.buttonsContainer}>
-						<button
-							type="button"
-							onClick={handleVolver}
-							className={styles.secondaryButton}
-						>
-							Volver
-						</button>
 						<button
 							type="submit"
 							className={styles.primaryButton}

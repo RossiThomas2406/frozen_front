@@ -21,6 +21,7 @@ const CrearOrdenProduccion = () => {
 	const [submitting, setSubmitting] = useState(false);
 	const [selectedProductUnit, setSelectedProductUnit] = useState("");
 	const [loadingLines, setLoadingLines] = useState(false);
+	const [dateError, setDateError] = useState("");
 
 	// Efecto para cargar productos y líneas de producción desde la API
 	useEffect(() => {
@@ -185,12 +186,27 @@ const CrearOrdenProduccion = () => {
 	};
 
 
-	// Manejar cambios en los inputs
 	const handleInputChange = (e) => {
 		const { name, value } = e.target;
 
-		if (name === "product") {
-			// Encontrar el producto seleccionado para obtener su unidad de medida
+		if (name === "startDate") {
+			// Validar que la fecha sea igual o mayor a hoy
+			const selectedDate = new Date(value);
+			const today = new Date();
+			today.setHours(0, 0, 0, 0); // Establecer hora a 00:00:00 para comparar solo fechas
+
+			if (selectedDate < today) {
+				setDateError("La fecha de inicio no puede ser anterior a hoy");
+			} else {
+				setDateError("");
+			}
+
+			setFormData((prev) => ({
+				...prev,
+				[name]: value,
+			}));
+		} else if (name === "product") {
+			// ... (el código existente para manejar productos)
 			const selectedProduct = productOptions.find(
 				(product) => product.value === value
 			);
@@ -198,18 +214,15 @@ const CrearOrdenProduccion = () => {
 				selectedProduct ? selectedProduct.unidad_medida : ""
 			);
 
-			// Limpiar la selección de línea de producción cuando cambia el producto
 			setFormData((prev) => ({
 				...prev,
 				product: value,
-				productionLine: "", // Limpiar la línea seleccionada
+				productionLine: "",
 			}));
 
-			// Si se seleccionó un producto válido, cargar las líneas compatibles
 			if (value) {
 				fetchLineasPorProducto(value);
 			} else {
-				// Si no hay producto seleccionado, limpiar las líneas filtradas
 				setFilteredLineOptions([]);
 			}
 		} else {
@@ -242,7 +255,6 @@ const CrearOrdenProduccion = () => {
 		}
 	};
 
-	// Manejar envío del formulario
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setSubmitting(true);
@@ -250,6 +262,17 @@ const CrearOrdenProduccion = () => {
 		// Validaciones básicas
 		if (!formData.product || !formData.quantity || !formData.productionLine) {
 			showAlert("Por favor, completa todos los campos obligatorios.", "error");
+			setSubmitting(false);
+			return;
+		}
+
+		// Validar fecha
+		const selectedDate = new Date(formData.startDate);
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		if (selectedDate < today) {
+			showAlert("La fecha de inicio no puede ser anterior a hoy.", "error");
 			setSubmitting(false);
 			return;
 		}
@@ -303,6 +326,7 @@ const CrearOrdenProduccion = () => {
 		});
 		setSelectedProductUnit("");
 		setFilteredLineOptions([]);
+		setDateError(""); // Limpiar error de fecha
 	};
 
 	// Manejar cancelación
@@ -321,7 +345,7 @@ const CrearOrdenProduccion = () => {
 			<header className={styles.header}>
 				<div className={styles.headerContent}>
 					<div className={styles.logo}>
-						Formulario de Creacion de Orden de Produccion
+						Formulario de Creación de Orden de Producción
 					</div>
 				</div>
 			</header>
@@ -482,7 +506,12 @@ const CrearOrdenProduccion = () => {
 										onChange={handleInputChange}
 										required
 										disabled={submitting}
+										min={new Date().toISOString().split("T")[0]} // Esto deshabilita fechas pasadas en el selector
+										className={dateError ? styles.errorInput : ""}
 									/>
+									{dateError && (
+										<small className={styles.errorText}>{dateError}</small>
+									)}
 								</div>
 							</div>
 						</div>

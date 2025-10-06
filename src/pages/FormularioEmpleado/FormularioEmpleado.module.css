@@ -70,11 +70,12 @@
   justify-content: center;
   align-items: center;
   margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg) 0;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   color: var(--text-primary);
   margin: 0;
@@ -93,50 +94,45 @@
   background: var(--bg-white);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   padding: var(--spacing-xl);
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
 }
 
-/* ===== SECCIONES DEL FORMULARIO ===== */
-.formSection {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background-color: var(--bg-lighter);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-}
-
-.sectionTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--primary-color);
-}
-
-/* ===== GRID HORIZONTAL ===== */
+/* ===== DISEÑO DE GRID HORIZONTAL ===== */
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-lg);
-  align-items: start;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
-/* ===== GRUPOS DE INPUT ===== */
-.inputGroup {
+.formColumn {
   display: flex;
   flex-direction: column;
 }
 
+.columnTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border-light);
+}
+
+/* ===== GRUPOS DE INPUT ===== */
+.inputGroup {
+  margin-bottom: var(--spacing-md);
+}
+
 .label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: var(--spacing-sm);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .input, .select {
@@ -144,7 +140,7 @@
   padding: 0.75rem;
   border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all var(--transition-normal);
   background-color: var(--bg-white);
 }
@@ -155,158 +151,115 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-/* ===== SECCIÓN DE CÁMARA MEJORADA ===== */
+/* ===== SECCIÓN DE CÁMARA ===== */
 .cameraSection {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.videoContainer {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  background-color: var(--bg-gray);
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--border-dark);
+  height: 100%;
   padding: var(--spacing-md);
-  min-height: 350px;
+  background-color: var(--bg-lighter);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
 }
 
 .video {
-  width: 100%;
-  max-width: 600px;
-  height: 350px;
   border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+  background-color: var(--bg-gray);
+  width: 100%;
+  height: 180px;
   object-fit: cover;
-  background-color: #000;
-}
-
-.cameraButtons {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--spacing-md);
 }
 
 .captureButton {
+  width: 100%;
   background-color: var(--success-color);
   color: var(--bg-white);
   border: none;
-  padding: 1rem 2.5rem;
+  padding: 0.75rem;
   border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 600;
-  transition: all var(--transition-normal);
-  min-width: 250px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color var(--transition-normal);
+  margin-bottom: var(--spacing-sm);
 }
 
 .captureButton:hover {
   background-color: var(--success-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 /* ===== BOTONES ===== */
 .buttonsContainer {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
-  border-top: 2px solid var(--border-light);
+  border-top: 1px solid var(--border-light);
 }
 
 .primaryButton {
   background-color: var(--primary-color);
   color: var(--bg-white);
   border: none;
-  padding: 1.25rem 2rem;
+  padding: 0.75rem 3rem;
   border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: 600;
-  transition: all var(--transition-normal);
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: background-color var(--transition-normal);
+  min-width: 200px;
 }
 
 .primaryButton:hover {
   background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.secondaryButton {
-  background-color: var(--secondary-color);
-  color: var(--bg-white);
-  border: none;
-  padding: 1.25rem 2rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: 600;
-  transition: all var(--transition-normal);
-}
-
-.secondaryButton:hover {
-  background-color: var(--secondary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 /* ===== MENSAJES ===== */
 .errorText {
   color: var(--danger-color);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   margin-top: var(--spacing-xs);
   margin-bottom: 0;
-  font-weight: 500;
 }
 
 .successText {
   color: var(--success-color);
-  font-size: 1rem;
+  font-size: 0.8rem;
   margin-top: var(--spacing-sm);
   margin-bottom: 0;
-  font-weight: 600;
-  text-align: center;
-  padding: var(--spacing-sm);
-  background-color: rgba(40, 167, 69, 0.1);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--success-color);
+  font-weight: 500;
 }
 
 .analyzingText {
   color: var(--info-color);
-  font-size: 1rem;
+  font-size: 0.8rem;
   margin-top: var(--spacing-sm);
   margin-bottom: 0;
-  text-align: center;
-  font-weight: 500;
-  padding: var(--spacing-sm);
-  background-color: rgba(23, 162, 184, 0.1);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--info-color);
 }
 
-/* ===== LOADER ===== */
+/* ===== LOADER EN CABECERA ===== */
 .loading {
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: var(--spacing-xxl);
+  align-items: flex-start;
+  padding: var(--spacing-xl) var(--spacing-md);
   flex-direction: column;
   gap: var(--spacing-md);
-  height: 100vh;
+  min-height: 200px;
   background-color: var(--bg-light);
+  margin-top: var(--spacing-md);
 }
 
 .spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 4px solid var(--border-color);
-  border-top: 4px solid var(--primary-color);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  align-self: center;
 }
 
 @keyframes spin {
@@ -315,20 +268,19 @@
 }
 
 .loading p {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--text-muted);
   font-weight: 500;
   margin: 0;
+  align-self: center;
+  text-align: center;
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
   .formGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .formContainer {
-    max-width: 900px;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
   }
 }
 
@@ -338,11 +290,14 @@
   }
   
   .headerContainer {
-    margin-bottom: var(--spacing-lg);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
   }
   
   .title {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    text-align: center;
   }
   
   .formContainer {
@@ -350,49 +305,22 @@
     margin: 0 var(--spacing-sm);
   }
   
-  .formSection {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-  }
-  
   .formGrid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-lg);
   }
   
-  .buttonsContainer {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  
-  .videoContainer {
-    min-height: 300px;
+  .cameraSection {
     padding: var(--spacing-sm);
   }
   
   .video {
-    height: 300px;
-    max-width: 100%;
-  }
-  
-  .captureButton {
-    min-width: 200px;
-    padding: 0.875rem 2rem;
-    font-size: 1rem;
-  }
-  
-  .primaryButton, .secondaryButton {
-    padding: 1rem 1.5rem;
-    font-size: 1.1rem;
+    height: 200px;
   }
 }
 
 @media (max-width: 480px) {
   .title {
-    font-size: 1.75rem;
-  }
-  
-  .sectionTitle {
     font-size: 1.25rem;
   }
   
@@ -400,24 +328,12 @@
     padding: var(--spacing-md);
   }
   
-  .formSection {
-    padding: var(--spacing-sm);
-  }
-  
   .input, .select {
     padding: 0.625rem;
   }
   
-  .videoContainer {
-    min-height: 250px;
-  }
-  
-  .video {
-    height: 250px;
-  }
-  
-  .captureButton {
-    min-width: 180px;
-    padding: 0.75rem 1.5rem;
+  .primaryButton, .captureButton {
+    padding: 0.625rem;
+    font-size: 0.9rem;
   }
 }
