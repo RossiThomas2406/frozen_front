@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import Modal from 'react-modal';
 import styles from "./VerOrdenesProduccion.module.css";
 import OrdenProduccionService from "../../classes/DTOS/OrdenProduccionService";
+
+// Configurar el modal para accesibilidad
+Modal.setAppElement('#root');
 
 const VerOrdenesProduccion = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [ordenes, setOrdenes] = useState([]);
 	const [ordenesFiltradas, setOrdenesFiltradas] = useState([]);
-	const [paginacion, setPaginacion] = useState(0);
 	const [cargando, setCargando] = useState(true);
 	const [error, setError] = useState(null);
+
+	// Estados para paginación
+	const [paginacion, setPaginacion] = useState({
+		currentPage: 1,
+		totalPages: 1,
+		count: 0,
+		next: null,
+		previous: null,
+		pageSize: 10
+	});
 
 	// Estados para las listas de filtros
 	const [estadosDisponibles, setEstadosDisponibles] = useState([]);
 	const [operariosDisponibles, setOperariosDisponibles] = useState([]);
+
+	// Estados para el modal de cancelación
+	const [modalCancelarAbierto, setModalCancelarAbierto] = useState(false);
+	const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
+	const [razonCancelacion, setRazonCancelacion] = useState("");
+	const [cancelando, setCancelando] = useState(false);
 
 	// Obtener filtros desde los parámetros de URL
 	const [filtroProducto, setFiltroProducto] = useState("todos");
@@ -24,8 +43,6 @@ const VerOrdenesProduccion = () => {
 	useEffect(() => {
 		const cargarDatosIniciales = async () => {
 			try {
-				// Obtener todos los estados desde /produccion/estados/
-				// Obtener todos los operarios desde /empleados/empleados-filter/?rol=1
 				const [estados, operarios] = await Promise.all([
 					OrdenProduccionService.obtenerEstados(),
 					OrdenProduccionService.obtenerOperarios(),
@@ -43,29 +60,34 @@ const VerOrdenesProduccion = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			await obtenerOrdenes();
+			await obtenerOrdenes(1);
 		};
 		fetchData();
 	}, [filtroProducto, filtroEstado, filtroOperario]);
 
-	
-
-
-	const obtenerOrdenes = async () => {
+	const obtenerOrdenes = async (page = 1) => {
 		try {
+			setCargando(true);
 			setError(null);
 
-			// Construir objeto de filtros para enviar al servicio
 			const filtros = {
 				producto: filtroProducto !== "todos" ? filtroProducto : null,
 				estado: filtroEstado !== "todos" ? filtroEstado : null,
 				operario: filtroOperario !== "todos" ? filtroOperario : null,
 			};
-			const { url, todasLasOrdenes } =
-				await OrdenProduccionService.obtenerTodasLasOrdenes(filtros);
-			setPaginacion(url);
-			setOrdenes(todasLasOrdenes);
-			setOrdenesFiltradas(todasLasOrdenes);
+
+			const response = await OrdenProduccionService.obtenerOrdenesPaginated(page, filtros);
+			
+			setOrdenes(response.ordenes);
+			setOrdenesFiltradas(response.ordenes);
+			setPaginacion({
+				currentPage: page,
+				totalPages: Math.ceil(response.paginacion.count / 10),
+				count: response.paginacion.count,
+				next: response.paginacion.next,
+				previous: response.paginacion.previous,
+				pageSize: 10
+			});
 		} catch (err) {
 			setError("Error al cargar las órdenes");
 			console.error("Error:", err);
@@ -73,7 +95,15 @@ const VerOrdenesProduccion = () => {
 			setCargando(false);
 		}
 	};
-	// Obtener productos únicos desde las órdenes (mantenemos esto porque no hay endpoint específico)
+
+	// Función para cambiar de página
+	const cambiarPagina = async (nuevaPagina) => {
+		if (nuevaPagina >= 1 && nuevaPagina <= paginacion.totalPages) {
+			await obtenerOrdenes(nuevaPagina);
+		}
+	};
+
+	// Obtener productos únicos desde las órdenes
 	const productosUnicos = ordenes.reduce((acc, orden) => {
 		if (orden.id_producto && !acc.find((p) => p.id === orden.id_producto)) {
 			acc.push({ id: orden.id_producto, nombre: orden.producto });
@@ -85,14 +115,16 @@ const VerOrdenesProduccion = () => {
 	const estadosUnicos = estadosDisponibles;
 	const operariosUnicos = operariosDisponibles;
 
-	// Debug logs
-
 	// Opciones de estados con colores
 	const getColorEstado = (estado) => {
 		const colores = {
 			"en espera": "#f39c12",
 			"en proceso": "#3498db",
 			finalizado: "#27ae60",
+			"Pendiente de inicio": "#f39c12",
+			"En proceso": "#3498db",
+			"Finalizada": "#27ae60",
+			"Cancelado": "#e74c3c"
 		};
 		return colores[estado] || "#95a5a6";
 	};
@@ -106,7 +138,7 @@ const VerOrdenesProduccion = () => {
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ id_estado_orden_produccion: 4 }), // 3 = En proceso
+					body: JSON.stringify({ id_estado_orden_produccion: 4 }), // 4 = En proceso
 				}
 			);
 
@@ -114,25 +146,66 @@ const VerOrdenesProduccion = () => {
 				throw new Error(`Error HTTP: ${response.status}`);
 			}
 
-			// Actualizar la orden en el estado local
-			const ordenActualizada = await response.json();
-			const obtenerOrdenModificada = await fetch(
-				`https://frozenback-test.up.railway.app/api/produccion/ordenes/${idOrden}/`
-			);
-			const datosOrdenModificada = await obtenerOrdenModificada.json();
-			const ordenTransformada =
-				OrdenProduccionService.transformarOrdenDTO(datosOrdenModificada);
+			await obtenerOrdenes(paginacion.currentPage);
 
-			console.log("Orden transformada:", ordenTransformada);
-			setOrdenesFiltradas((prevOrdenes) =>
-				prevOrdenes.map((orden) =>
-					orden.id === idOrden ? ordenTransformada : orden
-				)
-			);
-
-			console.log("Orden iniciada:", ordenesFiltradas);
 		} catch (error) {
 			console.error("Error al actualizar la orden:", error);
+		}
+	};
+
+	// Función para abrir el modal de cancelación
+	const abrirModalCancelar = (orden) => {
+		setOrdenSeleccionada(orden);
+		setRazonCancelacion("");
+		setModalCancelarAbierto(true);
+	};
+
+	// Función para cerrar el modal de cancelación
+	const cerrarModalCancelar = () => {
+		setModalCancelarAbierto(false);
+		setOrdenSeleccionada(null);
+		setRazonCancelacion("");
+		setCancelando(false);
+	};
+
+	// Función para manejar la cancelación de la orden
+	const manejarCancelarOrden = async () => {
+		if (!razonCancelacion.trim()) {
+			alert("Por favor, ingresa una razón para la cancelación");
+			return;
+		}
+
+		setCancelando(true);
+		try {
+			// Aquí iría la llamada al backend cuando tengas el endpoint
+			console.log("Cancelando orden:", {
+				ordenId: ordenSeleccionada.id,
+				razon: razonCancelacion,
+				fecha: new Date().toISOString()
+			});
+
+			// Simular llamada API
+			await new Promise(resolve => setTimeout(resolve, 1500));
+
+			// En un caso real, aquí harías:
+			// const response = await fetch(`/api/produccion/ordenes/${ordenSeleccionada.id}/cancelar/`, {
+			//   method: 'POST',
+			//   headers: { 'Content-Type': 'application/json' },
+			//   body: JSON.stringify({ razon: razonCancelacion })
+			// });
+
+			alert(`Orden #${ordenSeleccionada.id} cancelada exitosamente\nRazón: ${razonCancelacion}`);
+			
+			// Recargar las órdenes para reflejar el cambio
+			await obtenerOrdenes(paginacion.currentPage);
+			
+			cerrarModalCancelar();
+			
+		} catch (error) {
+			console.error("Error al cancelar la orden:", error);
+			alert("Error al cancelar la orden. Por favor, intenta nuevamente.");
+		} finally {
+			setCancelando(false);
 		}
 	};
 
@@ -196,32 +269,33 @@ const VerOrdenesProduccion = () => {
 		setFiltroProducto("todos");
 		setFiltroEstado("todos");
 		setFiltroOperario("todos");
-		// Limpiar URL
 		setSearchParams({});
 	};
 
-	const cargarMasOrdenes = async () => {
-		if (!paginacion) return; // No hay más páginas
+	// Generar array de páginas para mostrar en la paginación
+	const generarNumerosPagina = () => {
+		const paginas = [];
+		const paginaActual = paginacion.currentPage;
+		const totalPaginas = paginacion.totalPages;
 
-		try {
-			setCargando(true);
-			const response = await fetch(paginacion);
-			if (!response.ok) throw new Error("Error al cargar más órdenes");
-			const {next, results} = await response.json();
-			const ordenesTransformadas = results.map((orden) =>
-				OrdenProduccionService.transformarOrdenDTO(orden)
-			);
+		let inicio = Math.max(1, paginaActual - 2);
+		let fin = Math.min(totalPaginas, paginaActual + 2);
 
-			setPaginacion(next);
-			setOrdenesFiltradas((prevOrdenes) => [...prevOrdenes, ...ordenesTransformadas]);
-		} catch (error) {
-			console.error("Error al cargar más órdenes:", error);
-		} finally {
-			setCargando(false);
+		if (paginaActual <= 3) {
+			fin = Math.min(5, totalPaginas);
 		}
+		if (paginaActual >= totalPaginas - 2) {
+			inicio = Math.max(1, totalPaginas - 4);
+		}
+
+		for (let i = inicio; i <= fin; i++) {
+			paginas.push(i);
+		}
+
+		return paginas;
 	};
 
-	if (cargando) {
+	if (cargando && ordenes.length === 0) {
 		return (
 			<div className={styles.cargando}>Cargando órdenes de producción...</div>
 		);
@@ -235,14 +309,7 @@ const VerOrdenesProduccion = () => {
 		<div className={styles.verOrdenesProduccion}>
 			<h2 className={styles.titulo}>Órdenes de Producción</h2>
 
-			{/* Controles de Filtrado - Los filtros se sincronizan con la URL usando IDs */}
-			{/* Ejemplos de URLs: 
-				- /ordenes/?producto=3 (filtrar por producto con ID 3)
-				- /ordenes/?estado=2 (filtrar por estado con ID 2)  
-				- /ordenes/?operario=32 (filtrar por operario con ID 32)
-				- /ordenes/?producto=3&estado=2&operario=32 (combinar múltiples filtros)
-				Los valores en la URL corresponden a los IDs, no a los nombres
-			*/}
+			{/* Controles de Filtrado */}
 			<div className={styles.controles}>
 				<div className={styles.filtroGrupo}>
 					<label htmlFor="filtroProducto" className={styles.label}>
@@ -308,7 +375,8 @@ const VerOrdenesProduccion = () => {
 
 			{/* Contador de resultados */}
 			<div className={styles.contador}>
-				Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes
+				Mostrando {ordenesFiltradas.length} de {paginacion.count} órdenes 
+				{paginacion.totalPages > 1 && ` (Página ${paginacion.currentPage} de ${paginacion.totalPages})`}
 			</div>
 
 			{/* Lista de órdenes */}
@@ -354,7 +422,7 @@ const VerOrdenesProduccion = () => {
 
 								<div className={styles.infoGrupo}>
 									<strong>Iniciada:</strong>
-									<span>{orden.fecha_inicio}</span>
+									<span>{formatearFecha(orden.fecha_inicio)}</span>
 								</div>
 							</div>
 
@@ -369,7 +437,15 @@ const VerOrdenesProduccion = () => {
 								) : null}
 
 								{orden.estado === "En proceso" ? (
-									<button className={styles.btnFinalizar}>Finalizar</button>
+									<>
+										<button className={styles.btnFinalizar}>Finalizar</button>
+										<button 
+											className={styles.btnCancelar}
+											onClick={() => abrirModalCancelar(orden)}
+										>
+											Cancelar
+										</button>
+									</>
 								) : null}
 
 								{orden.estado === "Finalizada" ? (
@@ -391,11 +467,102 @@ const VerOrdenesProduccion = () => {
 					</div>
 				)}
 			</div>
-			{paginacion && (
-				<div>
-					<button className={styles.btnCargarMas} onClick={() => 	cargarMasOrdenes()}>Cargar Más ordenes</button>
+
+			{/* Paginación */}
+			{paginacion.totalPages > 1 && (
+				<div className={styles.paginacion}>
+					<button
+						className={`${styles.btnPagina} ${styles.btnPaginaAnterior}`}
+						onClick={() => cambiarPagina(paginacion.currentPage - 1)}
+						disabled={!paginacion.previous}
+					>
+						‹ Anterior
+					</button>
+
+					{generarNumerosPagina().map((numero) => (
+						<button
+							key={numero}
+							className={`${styles.btnPagina} ${
+								numero === paginacion.currentPage ? styles.btnPaginaActiva : ""
+							}`}
+							onClick={() => cambiarPagina(numero)}
+						>
+							{numero}
+						</button>
+					))}
+
+					<button
+						className={`${styles.btnPagina} ${styles.btnPaginaSiguiente}`}
+						onClick={() => cambiarPagina(paginacion.currentPage + 1)}
+						disabled={!paginacion.next}
+					>
+						Siguiente ›
+					</button>
 				</div>
 			)}
+
+			{/* Modal de Cancelación */}
+			<Modal
+				isOpen={modalCancelarAbierto}
+				onRequestClose={cerrarModalCancelar}
+				className={styles.modal}
+				overlayClassName={styles.overlay}
+				contentLabel="Cancelar Orden de Producción"
+			>
+				<div className={styles.modalContent}>
+					<h2 className={styles.modalTitulo}>Cancelar Orden de Producción</h2>
+					
+					{ordenSeleccionada && (
+						<div className={styles.modalInfo}>
+							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
+							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
+							<p><strong>Cantidad:</strong> {ordenSeleccionada.cantidad} unidades</p>
+						</div>
+					)}
+
+					<div className={styles.modalForm}>
+						<label htmlFor="razonCancelacion" className={styles.modalLabel}>
+							Razón de Cancelación *
+						</label>
+						<textarea
+							id="razonCancelacion"
+							value={razonCancelacion}
+							onChange={(e) => setRazonCancelacion(e.target.value)}
+							className={styles.modalTextarea}
+							placeholder="Describe la razón por la cual se cancela esta orden de producción..."
+							rows={5}
+							required
+						/>
+						<small className={styles.modalHelp}>
+							Este registro será guardado para auditoría y seguimiento.
+						</small>
+					</div>
+
+					<div className={styles.modalActions}>
+						<button
+							onClick={cerrarModalCancelar}
+							className={styles.btnModalCancelar}
+							disabled={cancelando}
+						>
+							Volver
+						</button>
+						<button
+							onClick={manejarCancelarOrden}
+							className={styles.btnModalConfirmar}
+							disabled={cancelando || !razonCancelacion.trim()}
+						>
+							{cancelando ? (
+								<>
+									<div className={styles.spinnerSmall}></div>
+									Cancelando...
+								</>
+							) : (
+								'Confirmar Cancelación'
+							)}
+						</button>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 };

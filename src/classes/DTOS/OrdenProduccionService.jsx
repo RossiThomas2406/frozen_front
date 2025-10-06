@@ -12,7 +12,8 @@ class OrdenProduccionService {
 			estado:
 				datosBackend.id_estado_orden_produccion?.descripcion || "Sin estado",
 			id_estado:
-				datosBackend.id_estado_orden_produccion?.id_estado_orden_produccion || null,
+				datosBackend.id_estado_orden_produccion?.id_estado_orden_produccion ||
+				null,
 
 			// Cantidad
 			cantidad: datosBackend.cantidad || 0,
@@ -42,6 +43,48 @@ class OrdenProduccionService {
 			estado_orden_descripcion:
 				datosBackend.id_estado_orden_produccion?.descripcion || "Sin estado",
 		};
+	}
+
+	static async obtenerOrdenesPaginated(page = 1, filtros = {}) {
+		try {
+			let url = `http://frozenback-test.up.railway.app/api/produccion/ordenes/?page=${page}`;
+
+			// Agregar filtros a la URL si existen
+			const params = new URLSearchParams();
+			if (filtros.producto) params.append("producto", filtros.producto);
+			if (filtros.estado) params.append("estado", filtros.estado);
+			if (filtros.operario) params.append("operario", filtros.operario);
+
+			const queryString = params.toString();
+			if (queryString) {
+				url += `&${queryString}`;
+			}
+
+			const response = await fetch(url);
+
+			if (!response.ok) {
+				throw new Error(`Error HTTP: ${response.status}`);
+			}
+
+			const datosPagina = await response.json();
+
+			// Transformar cada orden en el array de results
+			const ordenesTransformadas = datosPagina.results.map((ordenCompleja) =>
+				this.transformarOrdenDTO(ordenCompleja)
+			);
+
+			return {
+				ordenes: ordenesTransformadas,
+				paginacion: {
+					count: datosPagina.count,
+					next: datosPagina.next,
+					previous: datosPagina.previous,
+				},
+			};
+		} catch (error) {
+			console.error("Error en obtenerOrdenesPaginated:", error);
+			throw new Error("No se pudieron cargar las órdenes de producción");
+		}
 	}
 
 	// Función para normalizar estados (opcional - para estandarizar los nombres)
@@ -112,7 +155,6 @@ class OrdenProduccionService {
 		if (queryString) {
 			url += `?${queryString}`;
 		}
-
 
 		try {
 			const response = await fetch(url);
