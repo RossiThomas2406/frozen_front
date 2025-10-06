@@ -2,7 +2,6 @@ import React from "react";
 import axios from "axios";
 import styles from "./CrearOrdenDeVenta.module.css";
 import { useState, useEffect } from "react";
-import { MoonLoader } from "react-spinners";
 
 // Configuración base de axios
 const api = axios.create({
@@ -16,6 +15,7 @@ function CrearOrdenDeVenta() {
 	const [products, setProducts] = useState([]);
 	const [prioridades, setPrioridades] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [creatingOrder, setCreatingOrder] = useState(false); // Nuevo estado para crear orden
 	const [fields, setFields] = useState([
 		{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "" },
 	]);
@@ -228,6 +228,8 @@ function CrearOrdenDeVenta() {
 			return;
 		}
 		
+		setCreatingOrder(true); // Iniciar estado de carga
+		
 		try {
 			const response = await api.post("/ventas/ordenes-venta/crear/", nuevaOrden);
 
@@ -262,6 +264,8 @@ function CrearOrdenDeVenta() {
 				// Algo pasó en la configuración de la petición
 				alert("Error inesperado al crear la orden");
 			}
+		} finally {
+			setCreatingOrder(false); // Finalizar estado de carga
 		}
 	};
 
@@ -291,12 +295,9 @@ function CrearOrdenDeVenta() {
 
 	if (loading) {
 		return (
-			<div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200">
-				<div className="p-6">
-					<div className="flex items-center justify-center">
-						<MoonLoader color="#0a05ff" />
-					</div>
-				</div>
+			<div className={styles.loading}>
+				<div className={styles.spinner}></div>
+				<p>Cargando datos...</p>
 			</div>
 		);
 	}
@@ -306,100 +307,118 @@ function CrearOrdenDeVenta() {
 			<h1 className={styles.title}>Crear Orden de Venta</h1>
 			<div className="divFormulario">
 				<form onSubmit={handleSubmit}>
-					<div className={styles.divFormulario}>
+					<div className={styles.formGrid}>
 						{/* Cliente */}
-						<label htmlFor="Cliente">Cliente:</label>
-						<select
-							name="id_cliente"
-							id="Cliente"
-							value={orden.id_cliente}
-							onChange={handleChange}
-							className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-								errors.cliente ? "border-red-500" : "border-gray-300"
-							}`}
-						>
-							<option value="" disabled hidden>
-								Seleccione una opción
-							</option>
-							{clientes.map((cliente) => (
-								<option key={cliente.id_cliente} value={cliente.id_cliente}>
-									{cliente.nombre}
+						<div className={styles.formGroup}>
+							<label htmlFor="Cliente" className={styles.formLabel}>
+								Cliente:
+							</label>
+							<select
+								name="id_cliente"
+								id="Cliente"
+								value={orden.id_cliente}
+								onChange={handleChange}
+								disabled={creatingOrder}
+								className={`${styles.formInput} ${
+									errors.cliente ? styles.inputError : ""
+								} ${creatingOrder ? styles.disabledInput : ''}`}
+							>
+								<option value="" disabled hidden>
+									Seleccione una opción
 								</option>
-							))}
-						</select>
-						{errors.cliente && (
-							<span className="text-red-500 text-sm mt-1 block">
-								{errors.cliente}
-							</span>
-						)}
+								{clientes.map((cliente) => (
+									<option key={cliente.id_cliente} value={cliente.id_cliente}>
+										{cliente.nombre}
+									</option>
+								))}
+							</select>
+							{errors.cliente && (
+								<span className={styles.errorText}>
+									{errors.cliente}
+								</span>
+							)}
+						</div>
 
 						{/* Fecha de Entrega */}
-						<label htmlFor="FechaEntrega">Fecha de Entrega Estimada:</label>
-						<input
-							type="date"
-							id="FechaEntrega"
-							name="fecha_entrega"
-							value={orden.fecha_entrega}
-							min={obtenerFechaMinima()}
-							onChange={(e) =>
-								setOrden({
-									...orden,
-									fecha_entrega: e.target.value,
-								})
-							}
-							className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-								errors.fecha_entrega ? "border-red-500" : "border-gray-300"
-							}`}
-						/>
-						{errors.fecha_entrega && (
-							<span className="text-red-500 text-sm mt-1 block">
-								{errors.fecha_entrega}
-							</span>
-						)}
+						<div className={styles.formGroup}>
+							<label htmlFor="FechaEntrega" className={styles.formLabel}>
+								Fecha de Entrega Estimada:
+							</label>
+							<input
+								type="date"
+								id="FechaEntrega"
+								name="fecha_entrega"
+								value={orden.fecha_entrega}
+								min={obtenerFechaMinima()}
+								onChange={(e) =>
+									setOrden({
+										...orden,
+										fecha_entrega: e.target.value,
+									})
+								}
+								disabled={creatingOrder}
+								className={`${styles.formInput} ${
+									errors.fecha_entrega ? styles.inputError : ""
+								} ${creatingOrder ? styles.disabledInput : ''}`}
+							/>
+							{errors.fecha_entrega && (
+								<span className={styles.errorText}>
+									{errors.fecha_entrega}
+								</span>
+							)}
+						</div>
 
 						{/* Prioridad - Ahora desde la API */}
-						<label htmlFor="Prioridad">Prioridad:</label>
-						<select
-							name="id_prioridad"
-							id="Prioridad"
-							value={orden.id_prioridad}
-							onChange={handleChange}
-							className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-								errors.prioridad ? "border-red-500" : "border-gray-300"
-							}`}
-						>
-							<option value="" disabled hidden>
-								Seleccione una opción
-							</option>
-							{prioridades.map((prioridad) => (
-								<option key={prioridad.id_prioridad} value={prioridad.id_prioridad}>
-									{prioridad.descripcion}
+						<div className={styles.formGroup}>
+							<label htmlFor="Prioridad" className={styles.formLabel}>
+								Prioridad:
+							</label>
+							<select
+								name="id_prioridad"
+								id="Prioridad"
+								value={orden.id_prioridad}
+								onChange={handleChange}
+								disabled={creatingOrder}
+								className={`${styles.formInput} ${
+									errors.prioridad ? styles.inputError : ""
+								} ${creatingOrder ? styles.disabledInput : ''}`}
+							>
+								<option value="" disabled hidden>
+									Seleccione una opción
 								</option>
-							))}
-						</select>
-						{errors.prioridad && (
-							<span className="text-red-500 text-sm mt-1 block">
-								{errors.prioridad}
-							</span>
-						)}
+								{prioridades.map((prioridad) => (
+									<option key={prioridad.id_prioridad} value={prioridad.id_prioridad}>
+										{prioridad.descripcion}
+									</option>
+								))}
+							</select>
+							{errors.prioridad && (
+								<span className={styles.errorText}>
+									{errors.prioridad}
+								</span>
+							)}
+						</div>
 
 						{/* Productos */}
-						<div className="w-full mx-auto bg-white rounded-lg">
-							<div className="p-6">
+						<div className={styles.productsSection}>
+							<div className={styles.productsContainer}>
 								{fields.map((field, index) => (
 									<div
 										key={field.id}
-										className="p-4 border border-gray-300 rounded-lg bg-gray-50 mb-4"
+										className={styles.productCard}
 									>
-										<div className="flex items-center justify-between mb-4">
-											<label className="text-lg font-semibold text-gray-700">
+										<div className={styles.productHeader}>
+											<label className={styles.productTitle}>
 												Producto {index + 1}
 											</label>
 											{fields.length > 1 && (
 												<button
 													type="button"
 													onClick={() => removeField(field.id)}
-													className="h-8 w-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200"
+													disabled={creatingOrder}
+													className={`${styles.removeButton} ${
+														creatingOrder ? styles.disabledButton : ''
+													}`}
 												>
 													<svg
 														className="h-4 w-4"
@@ -418,11 +437,11 @@ function CrearOrdenDeVenta() {
 											)}
 										</div>
 
-										<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-											<div className="space-y-2">
+										<div className={styles.productGrid}>
+											<div className={styles.productField}>
 												<label
 													htmlFor={`producto-${field.id}`}
-													className="block text-sm font-medium text-gray-700"
+													className={styles.fieldLabel}
 												>
 													Producto
 												</label>
@@ -432,7 +451,10 @@ function CrearOrdenDeVenta() {
 													onChange={(e) =>
 														updateProduct(field.id, e.target.value)
 													}
-													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+													disabled={creatingOrder}
+													className={`${styles.formInput} ${
+														creatingOrder ? styles.disabledInput : ''
+													}`}
 												>
 													<option value="" disabled hidden>
 														Seleccione una opción
@@ -460,10 +482,10 @@ function CrearOrdenDeVenta() {
 												</select>
 											</div>
 
-											<div className="space-y-2">
+											<div className={styles.productField}>
 												<label
 													htmlFor={`cantidad-${field.id}`}
-													className="block text-sm font-medium text-gray-700"
+													className={styles.fieldLabel}
 												>
 													Cantidad
 												</label>
@@ -479,15 +501,20 @@ function CrearOrdenDeVenta() {
 															Number.parseInt(e.target.value) || 1
 														)
 													}
-													className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+													disabled={creatingOrder}
+													className={`${styles.formInput} ${
+														creatingOrder ? styles.disabledInput : ''
+													}`}
 												/>
 											</div>
 
-											<div className="space-y-2">
-												<label className="block text-sm font-medium text-gray-700">
+											<div className={styles.productField}>
+												<label className={styles.fieldLabel}>
 													Unidad de Medida
 												</label>
-												<div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+												<div className={`${styles.measurementDisplay} ${
+													creatingOrder ? styles.disabledInput : ''
+												}`}>
 													{field.unidad_medida || "Seleccione un producto"}
 												</div>
 											</div>
@@ -496,19 +523,22 @@ function CrearOrdenDeVenta() {
 								))}
 
 								{errors.productos && (
-									<div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-										<span className="text-red-600 text-sm">
+									<div className={styles.productsError}>
+										<span className={styles.errorText}>
 											{errors.productos}
 										</span>
 									</div>
 								)}
 
-								<div className="flex flex-col sm:flex-row gap-4">
+								<div className={styles.actionsContainer}>
 									{cantidadElementos < products.length && (
 										<button
 											type="button"
 											onClick={addField}
-											className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white hover:bg-gray-50 text-gray-700 font-medium transition-colors duration-200"
+											disabled={creatingOrder}
+											className={`${styles.addButton} ${
+												creatingOrder ? styles.disabledButton : ''
+											}`}
 										>
 											<svg
 												className="h-4 w-4"
@@ -529,11 +559,33 @@ function CrearOrdenDeVenta() {
 
 									<button
 										type="submit"
-										className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-200"
+										disabled={creatingOrder}
+										className={`${styles.submitButton} ${
+											creatingOrder ? styles.submitButtonLoading : ''
+										}`}
 									>
-										Enviar Pedido
+										{creatingOrder ? (
+											<div className={styles.buttonLoadingContent}>
+												<div className={styles.spinnerSmall}></div>
+												<span>Creando Orden...</span>
+											</div>
+										) : (
+											"Enviar Pedido"
+										)}
 									</button>
 								</div>
+
+								{/* Overlay de carga cuando se está creando la orden */}
+								{creatingOrder && (
+									<div className={styles.creatingOverlay}>
+										<div className={styles.creatingContent}>
+											<div className={styles.spinner}></div>
+											<p className={styles.creatingText}>
+												Creando orden de venta, por favor espere...
+											</p>
+										</div>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
