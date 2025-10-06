@@ -17,9 +17,34 @@ const Ventas = () => {
   const [fechaEntregaEdit, setFechaEntregaEdit] = useState('');
   const [prioridadEdit, setPrioridadEdit] = useState('');
 
+  // Estados para paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalOrdenes, setTotalOrdenes] = useState(0);
+
   // Función para navegar a crear nueva orden
   const handleCrearNuevaOrden = () => {
     navigate('/crearOrdenVenta');
+  };
+
+  // Función para obtener las órdenes con paginación
+  const fetchOrdenes = async (pagina = 1) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/?page=${pagina}`);
+      
+      const data = response.data;
+      setOrdenes(data.results);
+      setTotalOrdenes(data.count);
+      setTotalPaginas(Math.ceil(data.count / (data.results.length || 1)));
+      setPaginaActual(pagina);
+      
+    } catch (err) {
+      setError('Error al cargar las órdenes');
+      console.error('Error fetching orders:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -27,15 +52,16 @@ const Ventas = () => {
       try {
         setLoading(true);
         
-        const [ordenesResponse, productosResponse, prioridadesResponse] = await Promise.all([
-          axios.get('https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/listar/'),
+        const [productosResponse, prioridadesResponse] = await Promise.all([
           axios.get('https://frozenback-test.up.railway.app/api/productos/productos/'),
           axios.get('https://frozenback-test.up.railway.app/api/ventas/prioridades/')
         ]);
         
-        setOrdenes(ordenesResponse.data);
         setProductosDisponibles(productosResponse.data.results || []);
         setPrioridades(prioridadesResponse.data.results || []);
+        
+        // Cargar la primera página de órdenes
+        await fetchOrdenes(1);
         
       } catch (err) {
         setError('Error al cargar los datos');
@@ -47,6 +73,45 @@ const Ventas = () => {
 
     fetchData();
   }, []);
+
+  // Funciones de paginación
+  const irAPagina = (pagina) => {
+    if (pagina >= 1 && pagina <= totalPaginas) {
+      fetchOrdenes(pagina);
+    }
+  };
+
+  const irAPaginaSiguiente = () => {
+    if (paginaActual < totalPaginas) {
+      fetchOrdenes(paginaActual + 1);
+    }
+  };
+
+  const irAPaginaAnterior = () => {
+    if (paginaActual > 1) {
+      fetchOrdenes(paginaActual - 1);
+    }
+  };
+
+  // Función para generar números de página a mostrar
+  const obtenerNumerosPagina = () => {
+    const paginas = [];
+    const paginasAMostrar = 5; // Número máximo de páginas a mostrar en el paginador
+    
+    let inicio = Math.max(1, paginaActual - Math.floor(paginasAMostrar / 2));
+    let fin = Math.min(totalPaginas, inicio + paginasAMostrar - 1);
+    
+    // Ajustar inicio si estamos cerca del final
+    if (fin - inicio + 1 < paginasAMostrar) {
+      inicio = Math.max(1, fin - paginasAMostrar + 1);
+    }
+    
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    
+    return paginas;
+  };
 
   const formatFecha = (fecha) => {
     if (!fecha) return 'No asignada';
@@ -83,24 +148,45 @@ const Ventas = () => {
     return prioridad ? prioridad.id_prioridad : null;
   };
 
+  // Función para obtener el nombre del cliente
+  const getNombreCliente = (cliente) => {
+    if (typeof cliente === 'string') return cliente;
+    return cliente?.nombre || 'Cliente no especificado';
+  };
+
+  // Función para obtener la descripción del estado
+  const getDescripcionEstado = (estado) => {
+    if (typeof estado === 'string') return estado;
+    return estado?.descripcion || 'Estado desconocido';
+  };
+
+  // Función para obtener la descripción de la prioridad
+  const getDescripcionPrioridadFromObject = (prioridad) => {
+    if (typeof prioridad === 'string') return prioridad;
+    return prioridad?.descripcion || 'Prioridad no especificada';
+  };
+
   const getEstadoBadgeClass = (estado) => {
+    const estadoDescripcion = getDescripcionEstado(estado);
     const clases = {
       'Pendiente de Pago': styles.badgeEstadoPendientePago,
       'Pendiente': styles.badgeEstadoPendiente,
       'En Preparación': styles.badgeEstadoPreparacion,
-      'Completada': styles.badgeEstadoCompletada
+      'Completada': styles.badgeEstadoCompletada,
+      'Creada': styles.badgeEstadoDefault
     };
-    return clases[estado] || styles.badgeEstadoDefault;
+    return clases[estadoDescripcion] || styles.badgeEstadoDefault;
   };
 
   const getPrioridadBadgeClass = (prioridad) => {
+    const prioridadDescripcion = getDescripcionPrioridadFromObject(prioridad);
     const clases = {
       'Urgente': styles.badgePrioridadUrgente,
       'Alta': styles.badgePrioridadAlta,
       'Media': styles.badgePrioridadMedia,
       'Baja': styles.badgePrioridadBaja
     };
-    return clases[prioridad] || styles.badgePrioridadDefault;
+    return clases[prioridadDescripcion] || styles.badgePrioridadDefault;
   };
 
   const iniciarEdicion = (orden) => {
@@ -108,20 +194,19 @@ const Ventas = () => {
     
     // Agregar un id único temporal para cada producto
     const productosParaEditar = (orden.productos || []).map((p, index) => ({
-      id_producto: p.id_producto,
-      producto: p.producto || 'Producto sin nombre',
+      id_producto: p.producto?.id_producto || p.id_producto,
+      producto: p.producto?.nombre || p.producto || 'Producto sin nombre',
       cantidad: p.cantidad || 0,
-      unidad: p.unidad || 'unidad',
-      tipo: p.tipo || '',
-      tempId: `${p.id_producto}-${Date.now()}-${index}`
+      unidad: p.producto?.unidad?.descripcion || p.unidad || 'unidad',
+      tipo: p.producto?.tipo_producto?.descripcion || p.tipo || '',
+      tempId: `${p.id_orden_venta_producto || p.id_producto}-${Date.now()}-${index}`
     }));
     
     setProductosEdit(productosParaEditar);
     setFechaEntregaEdit(formatFechaParaInput(orden.fecha_entrega));
     
-    // Buscar el ID de prioridad basado en la descripción de la orden
-    const prioridadEncontrada = prioridades.find(p => p.descripcion === orden.prioridad);
-    setPrioridadEdit(prioridadEncontrada ? prioridadEncontrada.id_prioridad.toString() : '');
+    // Usar el ID de prioridad directamente del objeto
+    setPrioridadEdit(orden.prioridad?.id_prioridad?.toString() || '');
     
     setNuevoProducto({ id_producto: '', cantidad: 1 });
   };
@@ -237,27 +322,8 @@ const Ventas = () => {
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      // Actualizar el estado local
-      setOrdenes(ordenes.map(orden => 
-        orden.id_orden_venta === editando 
-          ? { 
-              ...orden, 
-              productos: productosEdit
-                .filter(p => p.cantidad > 0)
-                .map(p => ({
-                  id_producto: p.id_producto,
-                  producto: p.producto,
-                  cantidad: p.cantidad,
-                  unidad: p.unidad,
-                  tipo: p.tipo
-                })),
-              fecha_entrega: fechaEntregaEdit 
-                ? new Date(fechaEntregaEdit).toISOString().slice(0, 19).replace('T', ' ')
-                : null,
-              prioridad: getDescripcionPrioridad(parseInt(prioridadEdit)) || orden.prioridad
-            }
-          : orden
-      ));
+      // Recargar la página actual para reflejar los cambios
+      await fetchOrdenes(paginaActual);
       
       cancelarEdicion();
       alert('Orden actualizada correctamente');
@@ -271,6 +337,22 @@ const Ventas = () => {
     } finally {
       setGuardando(false);
     }
+  };
+
+  // Función para manejar el click en la orden
+  const handleOrdenClick = (orden, event) => {
+    // Prevenir que se active si se hace click en un botón dentro de la orden
+    if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+      return;
+    }
+    
+    // Si ya está en edición, no hacer nada
+    if (editando === orden.id_orden_venta) {
+      return;
+    }
+    
+    // Iniciar edición al hacer click en la orden
+    iniciarEdicion(orden);
   };
 
   if (loading) return (
@@ -300,20 +382,32 @@ const Ventas = () => {
           Crear Nueva Orden
         </button>
       </div>
+
+      {/* Información de paginación */}
+      <div className={styles.paginacionInfo}>
+        <p>
+          Mostrando {ordenes.length} de {totalOrdenes} órdenes 
+          (Página {paginaActual} de {totalPaginas})
+        </p>
+      </div>
       
       <div className={styles.ordenesList}>
         {ordenes.map((orden) => (
-          <div key={orden.id_orden_venta} className={styles.ordenItem}>
+          <div 
+            key={orden.id_orden_venta} 
+            className={`${styles.ordenItem} ${editando === orden.id_orden_venta ? styles.ordenEditando : ''}`}
+            onClick={(e) => handleOrdenClick(orden, e)}
+          >
             <div className={styles.ordenHeader}>
               <div className={styles.headerTop}>
                 <span className={styles.ordenId}>Orden #{orden.id_orden_venta}</span>
                 <div className={styles.badgesContainer}>
                   <span className={`${styles.badge} ${getEstadoBadgeClass(orden.estado_venta)}`}>
-                    {orden.estado_venta}
+                    {getDescripcionEstado(orden.estado_venta)}
                   </span>
                   {orden.prioridad && (
                     <span className={`${styles.badge} ${getPrioridadBadgeClass(orden.prioridad)}`}>
-                      {orden.prioridad}
+                      {getDescripcionPrioridadFromObject(orden.prioridad)}
                     </span>
                   )}
                 </div>
@@ -322,7 +416,7 @@ const Ventas = () => {
               <div className={styles.headerBottom}>
                 <div className={styles.clienteInfo}>
                   <span className={styles.clienteLabel}>Cliente:</span>
-                  <span className={styles.clienteNombre}> {orden.cliente}</span>
+                  <span className={styles.clienteNombre}> {getNombreCliente(orden.cliente)}</span>
                 </div>
                 <div className={styles.fechaInfo}>Creada: {formatFecha(orden.fecha)}</div>
               </div>
@@ -491,19 +585,17 @@ const Ventas = () => {
                     <div>
                       <div className={styles.productosHeader}>
                         <h3>Productos:</h3>
-                        <button onClick={() => iniciarEdicion(orden)} className={styles.botonEditar}>
-                          Editar
-                        </button>
                       </div>
                       <div className={styles.productosList}>
                         {orden.productos.map((producto, index) => (
-                          <div key={`${producto.id_producto}-${index}`} className={styles.productoItem}>
+                          <div key={`${producto.id_orden_venta_producto}-${index}`} className={styles.productoItem}>
                             <div className={styles.productoInfo}>
-                              <span className={styles.productoNombre}>{producto.producto}</span>
-                              <span className={styles.productoTipo}>({producto.tipo})</span>
+                              <span className={styles.productoNombre}>
+                                {producto.producto?.nombre || producto.producto || 'Producto sin nombre'}
+                              </span>
                             </div>
                             <div className={styles.productoCantidad}>
-                              {producto.cantidad} {producto.unidad}
+                              {producto.cantidad} {producto.producto?.unidad?.descripcion || producto.unidad || 'unidad'}
                             </div>
                           </div>
                         ))}
@@ -512,9 +604,6 @@ const Ventas = () => {
                   ) : (
                     <div className={styles.sinProductos}>
                       <span>No hay productos</span>
-                      <button onClick={() => iniciarEdicion(orden)} className={styles.botonEditar}>
-                        Editar
-                      </button>
                     </div>
                   )}
                 </>
@@ -524,7 +613,42 @@ const Ventas = () => {
         ))}
       </div>
 
-      {ordenes.length === 0 && <div className={styles.sinOrdenes}>No hay órdenes disponibles</div>}
+      {/* Componente de Paginación */}
+      {totalPaginas > 1 && (
+        <div className={styles.paginacionContainer}>
+          <button 
+            onClick={irAPaginaAnterior}
+            disabled={paginaActual === 1}
+            className={styles.botonPaginacion}
+          >
+            Anterior
+          </button>
+          
+          <div className={styles.numerosPagina}>
+            {obtenerNumerosPagina().map(numero => (
+              <button
+                key={numero}
+                onClick={() => irAPagina(numero)}
+                className={`${styles.numeroPagina} ${paginaActual === numero ? styles.paginaActiva : ''}`}
+              >
+                {numero}
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={irAPaginaSiguiente}
+            disabled={paginaActual === totalPaginas}
+            className={styles.botonPaginacion}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {ordenes.length === 0 && !loading && (
+        <div className={styles.sinOrdenes}>No hay órdenes disponibles</div>
+      )}
     </div>
   );
 };

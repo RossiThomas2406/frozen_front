@@ -14,11 +14,13 @@ const CrearOrdenProduccion = () => {
   const [alert, setAlert] = useState({ message: '', type: '', visible: false });
   const [productOptions, setProductOptions] = useState([]);
   const [productionLineOptions, setProductionLineOptions] = useState([]);
+  const [filteredLineOptions, setFilteredLineOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [responsable, setResponsable] = useState('');
   const [idUsuario, setIdUsuario] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedProductUnit, setSelectedProductUnit] = useState('');
+  const [loadingLines, setLoadingLines] = useState(false);
 
   // Efecto para cargar productos y líneas de producción desde la API
   useEffect(() => {
@@ -51,7 +53,7 @@ const CrearOrdenProduccion = () => {
         
         setProductOptions(transformedProducts);
 
-        // Procesar líneas de producción
+        // Procesar líneas de producción (todas las líneas disponibles)
         const lineasArray = lineasResponse.data.results;
         if (!Array.isArray(lineasArray)) {
           throw new Error('La respuesta de líneas de producción no contiene un formato válido');
@@ -67,13 +69,13 @@ const CrearOrdenProduccion = () => {
         }
         
         setProductionLineOptions(transformedLineas);
+        setFilteredLineOptions([]);
         
       } catch (error) {
         console.error('Error fetching data:', error);
         const errorMessage = error.response?.data?.message || error.message;
         showAlert('Error al cargar los datos: ' + errorMessage, 'error');
         
-        // Establecer arrays vacíos en caso de error
         if (error.message.includes('productos')) {
           setProductOptions([]);
         } else if (error.message.includes('líneas')) {
@@ -114,6 +116,56 @@ const CrearOrdenProduccion = () => {
     fetchData();
   }, []);
 
+  // Función para obtener líneas de producción compatibles con el producto
+  const fetchLineasPorProducto = async (idProducto) => {
+    try {
+      setLoadingLines(true);
+      
+      const response = await axios.post(
+        'https://frozenback-test.up.railway.app/api/recetas/lineas_por_producto/',
+        {
+          id_producto: parseInt(idProducto)
+        }
+      );
+
+      // La API devuelve un array directo con las líneas compatibles
+      const lineasCompatibles = response.data;
+      
+      if (!Array.isArray(lineasCompatibles)) {
+        throw new Error('La respuesta de líneas compatibles no contiene un formato válido');
+      }
+
+      // Transformar las líneas compatibles al mismo formato que productionLineOptions
+      const lineasFiltradas = lineasCompatibles.map(linea => ({
+        value: linea.id_linea_produccion.toString(),
+        label: linea.descripcion
+      }));
+
+      setFilteredLineOptions(lineasFiltradas);
+      
+      // Si la línea actualmente seleccionada no está en las compatibles, limpiar la selección
+      if (formData.productionLine && !lineasFiltradas.some(linea => linea.value === formData.productionLine)) {
+        setFormData(prev => ({
+          ...prev,
+          productionLine: ''
+        }));
+      }
+
+      // Mostrar mensaje informativo si no hay líneas compatibles
+      if (lineasFiltradas.length === 0) {
+        console.warn(`No se encontraron líneas compatibles para el producto ${idProducto}`);
+      }
+
+    } catch (error) {
+      console.error('Error al cargar líneas compatibles:', error);
+      const errorMessage = error.response?.data?.message || error.message;
+      showAlert('Error al cargar líneas de producción compatibles: ' + errorMessage, 'error');
+      setFilteredLineOptions([]);
+    } finally {
+      setLoadingLines(false);
+    }
+  };
+
   // Manejar cambios en los inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -122,12 +174,27 @@ const CrearOrdenProduccion = () => {
       // Encontrar el producto seleccionado para obtener su unidad de medida
       const selectedProduct = productOptions.find(product => product.value === value);
       setSelectedProductUnit(selectedProduct ? selectedProduct.unidad_medida : '');
+      
+      // Limpiar la selección de línea de producción cuando cambia el producto
+      setFormData(prev => ({
+        ...prev,
+        product: value,
+        productionLine: '' // Limpiar la línea seleccionada
+      }));
+
+      // Si se seleccionó un producto válido, cargar las líneas compatibles
+      if (value) {
+        fetchLineasPorProducto(value);
+      } else {
+        // Si no hay producto seleccionado, limpiar las líneas filtradas
+        setFilteredLineOptions([]);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   // Mostrar alerta
@@ -141,7 +208,7 @@ const CrearOrdenProduccion = () => {
   // Función para enviar datos a la API
   const enviarOrdenProduccion = async (ordenData) => {
     try {
-      const response = await axios.post('https://frozenback-test.up.railway.app/api/ordenes-produccion/', ordenData);
+      const response = await axios.post('https://frozenback-test.up.railway.app/api/produccion/ordenes/', ordenData);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -171,14 +238,12 @@ const CrearOrdenProduccion = () => {
     try {
       // Preparar datos para enviar
       const ordenData = {
-        id_usuario: parseInt(idUsuario),
-        id_tipo_producto: parseInt(formData.product),
+        id_supervisor: parseInt(idUsuario),
+        id_producto: parseInt(formData.product),
         cantidad: parseInt(formData.quantity),
         id_linea_produccion: parseInt(formData.productionLine),
-        fecha_inicio_planificada: formData.startDate
+        fecha_inicio: formData.startDate
       };
-
-      console.log('Datos a enviar:', ordenData); // Para debugging
 
       // Enviar a la API
       const resultado = await enviarOrdenProduccion(ordenData);
@@ -209,6 +274,7 @@ const CrearOrdenProduccion = () => {
       productionLine: ''
     });
     setSelectedProductUnit('');
+    setFilteredLineOptions([]);
   };
 
   // Manejar cancelación
@@ -304,6 +370,12 @@ const CrearOrdenProduccion = () => {
                 <div className={styles.formGroup}>
                   <label htmlFor="productionLine" className={styles.required}>
                     Línea de Producción
+                    {loadingLines && (
+                      <small className={styles.loadingText}> (Cargando líneas compatibles...)</small>
+                    )}
+                    {formData.product && filteredLineOptions.length > 0 && !loadingLines && (
+                      <small className={styles.successText}> ({filteredLineOptions.length} línea(s) compatible(s))</small>
+                    )}
                   </label>
                   <select
                     id="productionLine"
@@ -311,20 +383,26 @@ const CrearOrdenProduccion = () => {
                     value={formData.productionLine}
                     onChange={handleInputChange}
                     required
-                    disabled={submitting || productionLineOptions.length === 0}
+                    disabled={submitting || loadingLines || !formData.product || filteredLineOptions.length === 0}
                   >
                     <option value="">
-                      {productionLineOptions.length === 0 ? 'No hay líneas disponibles' : 'Seleccionar línea'}
+                      {!formData.product 
+                        ? 'Seleccione un producto primero' 
+                        : loadingLines 
+                          ? 'Cargando líneas compatibles...' 
+                          : filteredLineOptions.length === 0 
+                            ? 'No hay líneas compatibles para este producto' 
+                            : 'Seleccionar línea compatible'}
                     </option>
-                    {productionLineOptions.map(option => (
+                    {filteredLineOptions.map(option => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
-                  {productionLineOptions.length === 0 && !loading && (
+                  {formData.product && filteredLineOptions.length === 0 && !loadingLines && (
                     <small className={styles.errorText}>
-                      No se pudieron cargar las líneas de producción.
+                      No hay líneas de producción compatibles con el producto seleccionado.
                     </small>
                   )}
                 </div>
@@ -360,7 +438,7 @@ const CrearOrdenProduccion = () => {
               <button 
                 type="submit" 
                 className={`${styles.btn} ${styles.btnPrimary}`}
-                disabled={submitting || productOptions.length === 0 || productionLineOptions.length === 0 || !idUsuario}
+                disabled={submitting || productOptions.length === 0 || !formData.productionLine || !idUsuario}
               >
                 {submitting ? (
                   <>
