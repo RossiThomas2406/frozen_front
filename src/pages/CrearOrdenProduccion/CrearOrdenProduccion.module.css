@@ -198,6 +198,39 @@
   margin: 0;
 }
 
+/* Agregar al final del archivo CSS existente */
+
+.loadingText {
+  color: var(--warning-color);
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+.disabledInput {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.submitLoader {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+.errorText {
+  color: var(--accent-color);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {

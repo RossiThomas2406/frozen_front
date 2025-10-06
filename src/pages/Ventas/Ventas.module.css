@@ -115,6 +115,95 @@
   background-color: var(--primary-active);
 }
 
+/* ===== PAGINACIÓN ===== */
+.paginacionInfo {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-lighter);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.paginacionContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.botonPaginacion {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  min-width: 100px;
+}
+
+.botonPaginacion:hover:not(:disabled) {
+  background-color: var(--bg-light);
+  border-color: var(--border-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.botonPaginacion:disabled {
+  background-color: var(--bg-gray);
+  color: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.numerosPagina {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin: 0 var(--spacing-sm);
+}
+
+.numeroPagina {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 44px;
+  transition: all var(--transition-normal);
+}
+
+.numeroPagina:hover {
+  background-color: var(--bg-light);
+  border-color: var(--border-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.paginaActiva {
+  background-color: var(--primary-color);
+  color: var(--bg-white);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.paginaActiva:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: var(--bg-white);
+}
+
 /* ===== LISTA DE ÓRDENES ===== */
 .ordenesList {
   display: flex;
@@ -168,6 +257,26 @@
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+}
+
+.ordenItem {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ordenItem:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+}
+
+.ordenEditando {
+  cursor: default;
+  border: 2px solid #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.ordenEditando:hover {
+  background-color: white;
 }
 
 .badge {
@@ -619,6 +728,123 @@
   font-size: 0.875rem;
 }
 
+/* ===== MEJORAS PARA LA EXPERIENCIA DE PAGINACIÓN ===== */
+.paginacionInfo p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Efectos de hover mejorados */
+.botonPaginacion:active:not(:disabled),
+.numeroPagina:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* Estados de carga durante la paginación */
+.paginacionContainer.cargando {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Indicador de página actual en móvil */
+@media (max-width: 768px) {
+  .paginacionInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .paginacionInfo p {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* Mejoras de accesibilidad */
+.botonPaginacion:focus,
+.numeroPagina:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.paginaActiva:focus {
+  outline-color: var(--bg-white);
+}
+
+/* Animación suave para cambios de página */
+.ordenesList {
+  transition: opacity 0.3s ease;
+}
+
+.ordenesList.cambiandoPagina {
+  opacity: 0.7;
+}
+
+/* Transición suave al cambiar de página */
+.ordenesList {
+  position: relative;
+}
+
+.ordenesList::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+  border-radius: var(--radius-lg);
+}
+
+.ordenesList.cargando::before {
+  opacity: 1;
+}
+
+/* Spinner durante la carga de páginas */
+.ordenesList.cargando::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 2;
+}
+
+/* Estados deshabilitados mejorados */
+.botonPaginacion:disabled,
+.numeroPagina:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mejora visual para el contador de páginas */
+.paginacionInfo strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Separador visual en móvil */
+@media (max-width: 768px) {
+  .paginacionContainer {
+    border-top: 1px solid var(--border-light);
+    padding-top: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+  }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .container {
@@ -688,6 +914,30 @@
   .controlesEdicion {
     justify-content: space-between;
   }
+  
+  /* Responsive para paginación */
+  .paginacionContainer {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .numerosPagina {
+    order: -1;
+    margin: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .botonPaginacion {
+    min-width: 120px;
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .numeroPagina {
+    min-width: 40px;
+    padding: 0.5rem 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -702,5 +952,26 @@
   
   .botonCrearOrden {
     padding: 0.875rem var(--spacing-md);
+  }
+  
+  /* Responsive para paginación en móvil pequeño */
+  .paginacionInfo {
+    font-size: 0.8rem;
+    padding: var(--spacing-sm);
+  }
+  
+  .numerosPagina {
+    gap: 2px;
+  }
+  
+  .numeroPagina {
+    min-width: 36px;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8rem;
+  }
+  
+  .botonPaginacion {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
   }
 }

@@ -36,7 +36,7 @@ function App() {
 
              {/* <Route element={<ProtectedRoutes></ProtectedRoutes>}>*/}
                 <Route path="/home" element={<MenuPrincipal />} />
-                <Route path="/crearEmpleado" element={<FormularioEmpleado />} />
+                <Route path="/crearUsuario" element={<FormularioEmpleado />} />
                 <Route path="/verOrdenesVenta" element={<Ventas />} />
                 <Route path="/crearOrdenVenta" element={<CrearOrdenDeVenta />} />
                 <Route path="/crearOrdenProduccion" element={<CrearOrdenProduccion />} />
