@@ -28,22 +28,28 @@ const Ventas = () => {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [totalOrdenes, setTotalOrdenes] = useState(0);
 
-  // Estados para filtros - CORREGIDO: cliente ahora es string para búsqueda por nombre
-  const [filtroEstado, setFiltroEstado] = useState('todos');
-  const [filtroCliente, setFiltroCliente] = useState('todos');
-  const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
+  // Estados para filtros - INICIALIZAR CON VALORES DE URL
+  const [filtroEstado, setFiltroEstado] = useState(() => 
+    searchParams.get('estado') || 'todos'
+  );
+  const [filtroCliente, setFiltroCliente] = useState(() => 
+    searchParams.get('cliente') || 'todos'
+  );
+  const [filtroPrioridad, setFiltroPrioridad] = useState(() => 
+    searchParams.get('prioridad') || 'todos'
+  );
 
   // Función para navegar a crear nueva orden
   const handleCrearNuevaOrden = () => {
     navigate('/crearOrdenVenta');
   };
 
-  // Función para obtener las órdenes con paginación y filtros - CORREGIDO
+  // Función para obtener las órdenes con paginación y filtros
   const fetchOrdenes = async (pagina = 1) => {
     try {
       setLoading(true);
       
-      // Construir parámetros de filtro - CORREGIDO para cliente
+      // Construir parámetros de filtro
       const params = new URLSearchParams();
       params.append('page', pagina.toString());
       
@@ -51,7 +57,6 @@ const Ventas = () => {
         params.append('estado', filtroEstado);
       }
       if (filtroCliente !== 'todos' && filtroCliente !== '') {
-        // CORREGIDO: Enviar el nombre del cliente como string para búsqueda parcial
         params.append('cliente', filtroCliente);
       }
       if (filtroPrioridad !== 'todos' && filtroPrioridad !== '') {
@@ -99,6 +104,7 @@ const Ventas = () => {
     }
   };
 
+  // Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -115,15 +121,6 @@ const Ventas = () => {
         // Cargar estados y clientes
         await Promise.all([fetchEstados(), fetchClientes()]);
         
-        // Obtener filtros de URL si existen
-        const estadoURL = searchParams.get('estado');
-        const clienteURL = searchParams.get('cliente');
-        const prioridadURL = searchParams.get('prioridad');
-        
-        if (estadoURL) setFiltroEstado(estadoURL);
-        if (clienteURL) setFiltroCliente(clienteURL);
-        if (prioridadURL) setFiltroPrioridad(prioridadURL);
-        
         // Cargar la primera página de órdenes
         await fetchOrdenes(1);
         
@@ -138,12 +135,35 @@ const Ventas = () => {
     fetchData();
   }, []);
 
-  // Efecto para recargar órdenes cuando cambian los filtros
+  // Efecto para recargar órdenes cuando cambian los filtros - CORREGIDO
   useEffect(() => {
+    // Solo ejecutar si ya tenemos datos cargados
     if (productosDisponibles.length > 0 || ordenes.length > 0) {
-      fetchOrdenes(1);
+      const timeoutId = setTimeout(() => {
+        fetchOrdenes(1);
+      }, 300); // Debounce para evitar múltiples llamadas
+
+      return () => clearTimeout(timeoutId);
     }
   }, [filtroEstado, filtroCliente, filtroPrioridad]);
+
+  // Sincronizar URL cuando cambian los filtros - NUEVO EFECTO
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (filtroEstado !== 'todos') {
+      params.set('estado', filtroEstado);
+    }
+    if (filtroCliente !== 'todos') {
+      params.set('cliente', filtroCliente);
+    }
+    if (filtroPrioridad !== 'todos') {
+      params.set('prioridad', filtroPrioridad);
+    }
+
+    // Usar replace para evitar agregar al historial de navegación
+    setSearchParams(params, { replace: true });
+  }, [filtroEstado, filtroCliente, filtroPrioridad, setSearchParams]);
 
   // Funciones de paginación
   const irAPagina = (pagina) => {
@@ -183,55 +203,27 @@ const Ventas = () => {
     return paginas;
   };
 
-  // Funciones para manejar filtros - CORREGIDO
-  const actualizarURL = (nuevosFiltros) => {
-    const params = new URLSearchParams();
-
-    if (nuevosFiltros.estado && nuevosFiltros.estado !== 'todos') {
-      params.set('estado', nuevosFiltros.estado);
-    }
-    if (nuevosFiltros.cliente && nuevosFiltros.cliente !== 'todos') {
-      params.set('cliente', nuevosFiltros.cliente);
-    }
-    if (nuevosFiltros.prioridad && nuevosFiltros.prioridad !== 'todos') {
-      params.set('prioridad', nuevosFiltros.prioridad);
-    }
-
-    setSearchParams(params);
-  };
-
+  // Funciones para manejar filtros - SIMPLIFICADAS
   const manejarCambioEstado = (nuevoEstado) => {
     setFiltroEstado(nuevoEstado);
-    actualizarURL({
-      estado: nuevoEstado,
-      cliente: filtroCliente,
-      prioridad: filtroPrioridad,
-    });
+    setPaginaActual(1); // Resetear a primera página al cambiar filtro
   };
 
   const manejarCambioCliente = (nuevoCliente) => {
     setFiltroCliente(nuevoCliente);
-    actualizarURL({
-      estado: filtroEstado,
-      cliente: nuevoCliente,
-      prioridad: filtroPrioridad,
-    });
+    setPaginaActual(1);
   };
 
   const manejarCambioPrioridad = (nuevaPrioridad) => {
     setFiltroPrioridad(nuevaPrioridad);
-    actualizarURL({
-      estado: filtroEstado,
-      cliente: filtroCliente,
-      prioridad: nuevaPrioridad,
-    });
+    setPaginaActual(1);
   };
 
   const limpiarFiltros = () => {
     setFiltroEstado('todos');
     setFiltroCliente('todos');
     setFiltroPrioridad('todos');
-    setSearchParams({});
+    setPaginaActual(1);
   };
 
   const formatFecha = (fecha) => {
@@ -511,7 +503,7 @@ const Ventas = () => {
     </div>
   );
 
-  return (
+ return (
     <div className={styles.container}>
       <div className={styles.headerContainer}>
         <h1 className={styles.title}>Órdenes de Venta</h1>
@@ -523,7 +515,7 @@ const Ventas = () => {
         </button>
       </div>
 
-      {/* Controles de Filtrado - CORREGIDO para cliente */}
+      {/* Controles de Filtrado */}
       <div className={styles.controles}>
         <div className={styles.filtroGrupo}>
           <label htmlFor="filtroEstado" className={styles.label}>
