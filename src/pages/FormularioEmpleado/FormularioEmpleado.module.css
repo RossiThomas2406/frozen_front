@@ -60,7 +60,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--spacing-md);
-  min-height: 100vh;
+  min-height: 70vh;
   background-color: var(--bg-light);
 }
 
