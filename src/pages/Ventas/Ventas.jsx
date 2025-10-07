@@ -22,6 +22,7 @@ const Ventas = () => {
   const [fechaEntregaEdit, setFechaEntregaEdit] = useState('');
   const [prioridadEdit, setPrioridadEdit] = useState('');
   const [fechaOriginal, setFechaOriginal] = useState('');
+  const [cancelandoOrden, setCancelandoOrden] = useState(null);
 
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -226,6 +227,53 @@ const Ventas = () => {
     setPaginaActual(1);
   };
 
+  // FUNCIÓN PARA CANCELAR ORDEN - NUEVA
+  const cancelarOrden = async (idOrdenVenta) => {
+    if (!window.confirm('¿Estás seguro de que deseas cancelar esta orden? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      setCancelandoOrden(idOrdenVenta);
+      
+      const datosCancelacion = {
+        id_orden_venta: idOrdenVenta,
+        id_estado_venta: 6 // ID para estado "Cancelada"
+      };
+
+      const response = await axios.put(
+        'https://frozenback-test.up.railway.app/api/ventas/ordenes_venta/cambiar_estado/',
+        datosCancelacion,
+        { 
+          headers: { 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+
+      // Recargar la página actual para reflejar el cambio
+      await fetchOrdenes(paginaActual);
+      
+      alert('Orden cancelada correctamente');
+      
+    } catch (err) {
+      const mensaje = err.response?.data 
+        ? `Error ${err.response.status}: ${JSON.stringify(err.response.data)}` 
+        : 'Error de conexión';
+      alert(mensaje);
+      console.error('Error cancelando orden:', err);
+    } finally {
+      setCancelandoOrden(null);
+    }
+  };
+
+  // Función para verificar si una orden puede ser cancelada
+  const puedeCancelarOrden = (orden) => {
+    const estadoDescripcion = getDescripcionEstado(orden.estado_venta);
+    // Solo permitir cancelar órdenes que no estén ya canceladas o completadas
+    return estadoDescripcion !== 'Cancelada' && estadoDescripcion !== 'Completada';
+  };
+
   const formatFecha = (fecha) => {
     if (!fecha) return 'No asignada';
     
@@ -286,6 +334,7 @@ const Ventas = () => {
       'Pendiente': styles.badgeEstadoPendiente,
       'En Preparación': styles.badgeEstadoPreparacion,
       'Completada': styles.badgeEstadoCompletada,
+      'Cancelada': styles.badgeEstadoCancelada,
       'Creada': styles.badgeEstadoDefault
     };
     return clases[estadoDescripcion] || styles.badgeEstadoDefault;
@@ -503,7 +552,7 @@ const Ventas = () => {
     </div>
   );
 
- return (
+  return (
     <div className={styles.container}>
       <div className={styles.headerContainer}>
         <h1 className={styles.title}>Órdenes de Venta</h1>
@@ -621,6 +670,22 @@ const Ventas = () => {
                 <span className={styles.fechaEntregaLabel}>Entrega estimada:</span>
                 <span className={styles.fechaEntregaValor}> {formatFecha(orden.fecha_entrega)}</span>
               </div>
+
+              {/* BOTÓN PARA CANCELAR ORDEN - NUEVO */}
+              {puedeCancelarOrden(orden) && (
+                <div className={styles.botonesAccion}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cancelarOrden(orden.id_orden_venta);
+                    }}
+                    disabled={cancelandoOrden === orden.id_orden_venta}
+                    className={styles.botonCancelarOrden}
+                  >
+                    {cancelandoOrden === orden.id_orden_venta ? 'Cancelando...' : 'Cancelar Orden'}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className={styles.ordenBody}>
