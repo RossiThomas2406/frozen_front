@@ -132,10 +132,6 @@ const TablaStockProductos = () => {
                   : 'Cargando...'}
               </div>
             </div>
-
-            <div className={styles.cardFooter}>
-              <span className={styles.productId}>ID: {product.id_producto}</span>
-            </div>
           </div>
         ))}
       </div>
