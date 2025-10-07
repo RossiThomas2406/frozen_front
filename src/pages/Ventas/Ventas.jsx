@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import styles from './Ventas.module.css';
 
 const Ventas = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [ordenes, setOrdenes] = useState([]);
   const [productosDisponibles, setProductosDisponibles] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
+  const [estadosDisponibles, setEstadosDisponibles] = useState([]);
+  const [clientesDisponibles, setClientesDisponibles] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editando, setEditando] = useState(null);
@@ -23,21 +28,46 @@ const Ventas = () => {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [totalOrdenes, setTotalOrdenes] = useState(0);
 
+  // Estados para filtros - CORREGIDO: cliente ahora es string para búsqueda por nombre
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [filtroCliente, setFiltroCliente] = useState('todos');
+  const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
+
   // Función para navegar a crear nueva orden
   const handleCrearNuevaOrden = () => {
     navigate('/crearOrdenVenta');
   };
 
-  // Función para obtener las órdenes con paginación
+  // Función para obtener las órdenes con paginación y filtros - CORREGIDO
   const fetchOrdenes = async (pagina = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get(`https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/?page=${pagina}`);
+      
+      // Construir parámetros de filtro - CORREGIDO para cliente
+      const params = new URLSearchParams();
+      params.append('page', pagina.toString());
+      
+      if (filtroEstado !== 'todos' && filtroEstado !== '') {
+        params.append('estado', filtroEstado);
+      }
+      if (filtroCliente !== 'todos' && filtroCliente !== '') {
+        // CORREGIDO: Enviar el nombre del cliente como string para búsqueda parcial
+        params.append('cliente', filtroCliente);
+      }
+      if (filtroPrioridad !== 'todos' && filtroPrioridad !== '') {
+        params.append('prioridad', filtroPrioridad);
+      }
+
+      console.log('Fetching órdenes con parámetros:', params.toString());
+
+      const response = await axios.get(
+        `https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/?${params.toString()}`
+      );
       
       const data = response.data;
-      setOrdenes(data.results);
-      setTotalOrdenes(data.count);
-      setTotalPaginas(Math.ceil(data.count / (data.results.length || 1)));
+      setOrdenes(data.results || []);
+      setTotalOrdenes(data.count || 0);
+      setTotalPaginas(Math.ceil((data.count || 1) / (data.results?.length || 1)));
       setPaginaActual(pagina);
       
     } catch (err) {
@@ -45,6 +75,27 @@ const Ventas = () => {
       console.error('Error fetching orders:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para obtener estados disponibles
+  const fetchEstados = async () => {
+    try {
+      const response = await axios.get('https://frozenback-test.up.railway.app/api/ventas/estados-venta/');
+      setEstadosDisponibles(response.data.results || []);
+    } catch (err) {
+      console.error('Error fetching estados:', err);
+    }
+  };
+
+  // Función para obtener clientes disponibles
+  const fetchClientes = async () => {
+    try {
+      const response = await axios.get('https://frozenback-test.up.railway.app/api/ventas/clientes/');
+      console.log('Clientes obtenidos:', response.data);
+      setClientesDisponibles(response.data.results || []);
+    } catch (err) {
+      console.error('Error fetching clientes:', err);
     }
   };
 
@@ -61,6 +112,18 @@ const Ventas = () => {
         setProductosDisponibles(productosResponse.data.results || []);
         setPrioridades(prioridadesResponse.data.results || []);
         
+        // Cargar estados y clientes
+        await Promise.all([fetchEstados(), fetchClientes()]);
+        
+        // Obtener filtros de URL si existen
+        const estadoURL = searchParams.get('estado');
+        const clienteURL = searchParams.get('cliente');
+        const prioridadURL = searchParams.get('prioridad');
+        
+        if (estadoURL) setFiltroEstado(estadoURL);
+        if (clienteURL) setFiltroCliente(clienteURL);
+        if (prioridadURL) setFiltroPrioridad(prioridadURL);
+        
         // Cargar la primera página de órdenes
         await fetchOrdenes(1);
         
@@ -74,6 +137,13 @@ const Ventas = () => {
 
     fetchData();
   }, []);
+
+  // Efecto para recargar órdenes cuando cambian los filtros
+  useEffect(() => {
+    if (productosDisponibles.length > 0 || ordenes.length > 0) {
+      fetchOrdenes(1);
+    }
+  }, [filtroEstado, filtroCliente, filtroPrioridad]);
 
   // Funciones de paginación
   const irAPagina = (pagina) => {
@@ -113,6 +183,57 @@ const Ventas = () => {
     return paginas;
   };
 
+  // Funciones para manejar filtros - CORREGIDO
+  const actualizarURL = (nuevosFiltros) => {
+    const params = new URLSearchParams();
+
+    if (nuevosFiltros.estado && nuevosFiltros.estado !== 'todos') {
+      params.set('estado', nuevosFiltros.estado);
+    }
+    if (nuevosFiltros.cliente && nuevosFiltros.cliente !== 'todos') {
+      params.set('cliente', nuevosFiltros.cliente);
+    }
+    if (nuevosFiltros.prioridad && nuevosFiltros.prioridad !== 'todos') {
+      params.set('prioridad', nuevosFiltros.prioridad);
+    }
+
+    setSearchParams(params);
+  };
+
+  const manejarCambioEstado = (nuevoEstado) => {
+    setFiltroEstado(nuevoEstado);
+    actualizarURL({
+      estado: nuevoEstado,
+      cliente: filtroCliente,
+      prioridad: filtroPrioridad,
+    });
+  };
+
+  const manejarCambioCliente = (nuevoCliente) => {
+    setFiltroCliente(nuevoCliente);
+    actualizarURL({
+      estado: filtroEstado,
+      cliente: nuevoCliente,
+      prioridad: filtroPrioridad,
+    });
+  };
+
+  const manejarCambioPrioridad = (nuevaPrioridad) => {
+    setFiltroPrioridad(nuevaPrioridad);
+    actualizarURL({
+      estado: filtroEstado,
+      cliente: filtroCliente,
+      prioridad: nuevaPrioridad,
+    });
+  };
+
+  const limpiarFiltros = () => {
+    setFiltroEstado('todos');
+    setFiltroCliente('todos');
+    setFiltroPrioridad('todos');
+    setSearchParams({});
+  };
+
   const formatFecha = (fecha) => {
     if (!fecha) return 'No asignada';
     
@@ -142,26 +263,26 @@ const Ventas = () => {
     return prioridad ? prioridad.descripcion : '';
   };
 
-  // Función para obtener el ID de la prioridad por descripción
-  const getIdPrioridad = (descripcion) => {
-    const prioridad = prioridades.find(p => p.descripcion === descripcion);
-    return prioridad ? prioridad.id_prioridad : null;
-  };
-
   // Función para obtener el nombre del cliente
   const getNombreCliente = (cliente) => {
+    if (!cliente) return 'Cliente no especificado';
     if (typeof cliente === 'string') return cliente;
-    return cliente?.nombre || 'Cliente no especificado';
+    if (typeof cliente === 'object') {
+      return cliente.nombre || cliente.nombre_cliente || 'Cliente no especificado';
+    }
+    return 'Cliente no especificado';
   };
 
   // Función para obtener la descripción del estado
   const getDescripcionEstado = (estado) => {
+    if (!estado) return 'Estado desconocido';
     if (typeof estado === 'string') return estado;
     return estado?.descripcion || 'Estado desconocido';
   };
 
   // Función para obtener la descripción de la prioridad
   const getDescripcionPrioridadFromObject = (prioridad) => {
+    if (!prioridad) return 'Prioridad no especificada';
     if (typeof prioridad === 'string') return prioridad;
     return prioridad?.descripcion || 'Prioridad no especificada';
   };
@@ -279,87 +400,87 @@ const Ventas = () => {
     setNuevoProducto({ id_producto: '', cantidad: 1 });
   };
 
-const guardarCambios = async () => {
-  if (!editando) return;
+  const guardarCambios = async () => {
+    if (!editando) return;
 
-  try {
-    setGuardando(true);
-    
-    // Validar que la fecha de entrega no esté vacía
-    if (!fechaEntregaEdit.trim()) {
-      alert('La fecha de entrega estimada es obligatoria');
-      setGuardando(false);
-      return;
-    }
-
-    // SOLUCIÓN: Solo validar si la fecha fue modificada
-    const fechaModificada = fechaEntregaEdit !== fechaOriginal;
-    
-    if (fechaModificada && fechaEntregaEdit && fechaOriginal) {
-      const fechaOriginalObj = new Date(fechaOriginal);
-      const fechaNuevaObj = new Date(fechaEntregaEdit);
+    try {
+      setGuardando(true);
       
-      // Solo validar si ambas fechas son válidas
-      if (!isNaN(fechaOriginalObj.getTime()) && !isNaN(fechaNuevaObj.getTime())) {
-        if (fechaNuevaObj <= fechaOriginalObj) {
-          alert('La nueva fecha de entrega debe ser mayor a la fecha original');
-          setGuardando(false);
-          return;
+      // Validar que la fecha de entrega no esté vacía
+      if (!fechaEntregaEdit.trim()) {
+        alert('La fecha de entrega estimada es obligatoria');
+        setGuardando(false);
+        return;
+      }
+
+      // SOLUCIÓN: Solo validar si la fecha fue modificada
+      const fechaModificada = fechaEntregaEdit !== fechaOriginal;
+      
+      if (fechaModificada && fechaEntregaEdit && fechaOriginal) {
+        const fechaOriginalObj = new Date(fechaOriginal);
+        const fechaNuevaObj = new Date(fechaEntregaEdit);
+        
+        // Solo validar si ambas fechas son válidas
+        if (!isNaN(fechaOriginalObj.getTime()) && !isNaN(fechaNuevaObj.getTime())) {
+          if (fechaNuevaObj <= fechaOriginalObj) {
+            alert('La nueva fecha de entrega debe ser mayor a la fecha original');
+            setGuardando(false);
+            return;
+          }
         }
       }
-    }
 
-    const productosValidos = productosEdit
-      .map(p => ({
-        id_producto: parseInt(p.id_producto),
-        cantidad: parseInt(p.cantidad)
-      }))
-      .filter(p => p.cantidad > 0);
+      const productosValidos = productosEdit
+        .map(p => ({
+          id_producto: parseInt(p.id_producto),
+          cantidad: parseInt(p.cantidad)
+        }))
+        .filter(p => p.cantidad > 0);
 
-    if (productosValidos.length === 0) {
-      alert('La orden debe tener al menos un producto con cantidad mayor a 0');
+      if (productosValidos.length === 0) {
+        alert('La orden debe tener al menos un producto con cantidad mayor a 0');
+        setGuardando(false);
+        return;
+      }
+
+      // Preparar datos para la actualización
+      const datosActualizacion = {
+        id_orden_venta: editando,
+        productos: productosValidos
+      };
+
+      // Agregar fecha_entrega (obligatoria)
+      const fechaObj = new Date(fechaEntregaEdit);
+      const fechaFormateada = fechaObj.toISOString().slice(0, 19).replace('T', ' ');
+      datosActualizacion.fecha_entrega = fechaFormateada;
+
+      // Agregar id_prioridad si se seleccionó
+      if (prioridadEdit) {
+        datosActualizacion.id_prioridad = parseInt(prioridadEdit);
+      }
+
+      await axios.put(
+        'https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/actualizar/',
+        datosActualizacion,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      // Recargar la página actual para reflejar los cambios
+      await fetchOrdenes(paginaActual);
+      
+      cancelarEdicion();
+      alert('Orden actualizada correctamente');
+      
+    } catch (err) {
+      const mensaje = err.response?.data 
+        ? `Error ${err.response.status}: ${JSON.stringify(err.response.data)}` 
+        : 'Error de conexión';
+      alert(mensaje);
+      console.error('Error guardando cambios:', err);
+    } finally {
       setGuardando(false);
-      return;
     }
-
-    // Preparar datos para la actualización
-    const datosActualizacion = {
-      id_orden_venta: editando,
-      productos: productosValidos
-    };
-
-    // Agregar fecha_entrega (obligatoria)
-    const fechaObj = new Date(fechaEntregaEdit);
-    const fechaFormateada = fechaObj.toISOString().slice(0, 19).replace('T', ' ');
-    datosActualizacion.fecha_entrega = fechaFormateada;
-
-    // Agregar id_prioridad si se seleccionó
-    if (prioridadEdit) {
-      datosActualizacion.id_prioridad = parseInt(prioridadEdit);
-    }
-
-    await axios.put(
-      'https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/actualizar/',
-      datosActualizacion,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    // Recargar la página actual para reflejar los cambios
-    await fetchOrdenes(paginaActual);
-    
-    cancelarEdicion();
-    alert('Orden actualizada correctamente');
-    
-  } catch (err) {
-    const mensaje = err.response?.data 
-      ? `Error ${err.response.status}: ${JSON.stringify(err.response.data)}` 
-      : 'Error de conexión';
-    alert(mensaje);
-    console.error('Error guardando cambios:', err);
-  } finally {
-    setGuardando(false);
-  }
-};
+  };
 
   // Función para manejar el click en la orden
   const handleOrdenClick = (orden, event) => {
@@ -399,6 +520,70 @@ const guardarCambios = async () => {
           className={styles.botonCrearOrden}
         >
           Crear Nueva Orden
+        </button>
+      </div>
+
+      {/* Controles de Filtrado - CORREGIDO para cliente */}
+      <div className={styles.controles}>
+        <div className={styles.filtroGrupo}>
+          <label htmlFor="filtroEstado" className={styles.label}>
+            Filtrar por Estado:
+          </label>
+          <select
+            id="filtroEstado"
+            value={filtroEstado}
+            onChange={(e) => manejarCambioEstado(e.target.value)}
+            className={styles.select}
+          >
+            <option value="todos">Todos los estados</option>
+            {estadosDisponibles.map((estado) => (
+              <option key={estado.id_estado_venta} value={estado.id_estado_venta}>
+                {estado.descripcion}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.filtroGrupo}>
+          <label htmlFor="filtroCliente" className={styles.label}>
+            Filtrar por Cliente:
+          </label>
+          <select
+            id="filtroCliente"
+            value={filtroCliente}
+            onChange={(e) => manejarCambioCliente(e.target.value)}
+            className={styles.select}
+          >
+            <option value="todos">Todos los clientes</option>
+            {clientesDisponibles.map((cliente) => (
+              <option key={cliente.id_cliente} value={cliente.nombre || cliente.nombre_cliente}>
+                {cliente.nombre || cliente.nombre_cliente || `Cliente ${cliente.id_cliente}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.filtroGrupo}>
+          <label htmlFor="filtroPrioridad" className={styles.label}>
+            Filtrar por Prioridad:
+          </label>
+          <select
+            id="filtroPrioridad"
+            value={filtroPrioridad}
+            onChange={(e) => manejarCambioPrioridad(e.target.value)}
+            className={styles.select}
+          >
+            <option value="todos">Todas las prioridades</option>
+            {prioridades.map((prioridad) => (
+              <option key={prioridad.id_prioridad} value={prioridad.id_prioridad}>
+                {prioridad.descripcion}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button onClick={limpiarFiltros} className={styles.btnLimpiar}>
+          Limpiar Filtros
         </button>
       </div>
 
@@ -499,7 +684,7 @@ const guardarCambios = async () => {
                         </small>
                       )}
                       {fechaEntregaEdit && 
-                      fechaEntregaEdit !== fechaOriginal && // SOLUCIÓN: Solo mostrar error si la fecha cambió
+                      fechaEntregaEdit !== fechaOriginal &&
                       fechaOriginal && 
                       new Date(fechaEntregaEdit) <= new Date(fechaOriginal) && (
                         <small className={styles.fechaError}>
@@ -598,7 +783,7 @@ const guardarCambios = async () => {
                         guardando || 
                         productosEdit.filter(p => p.cantidad > 0).length === 0 || 
                         !fechaEntregaEdit.trim() || 
-                        (fechaEntregaEdit !== fechaOriginal && // SOLUCIÓN: Solo validar si la fecha cambió
+                        (fechaEntregaEdit !== fechaOriginal &&
                         fechaEntregaEdit && 
                         fechaOriginal && 
                         !isNaN(new Date(fechaEntregaEdit).getTime()) && 
