@@ -15,9 +15,9 @@ function CrearOrdenDeVenta() {
 	const [products, setProducts] = useState([]);
 	const [prioridades, setPrioridades] = useState([]);
 	const [loading, setLoading] = useState(true);
-	const [creatingOrder, setCreatingOrder] = useState(false); // Nuevo estado para crear orden
+	const [creatingOrder, setCreatingOrder] = useState(false);
 	const [fields, setFields] = useState([
-		{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "" },
+		{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "", cantidad_disponible: 0 },
 	]);
 	const [orden, setOrden] = useState({
 		id_cliente: "",
@@ -66,6 +66,17 @@ function CrearOrdenDeVenta() {
 		return await api.get("/ventas/prioridades/");
 	};
 
+	// Nueva función para obtener la cantidad disponible de un producto
+	const obtenerCantidadDisponible = async (id_producto) => {
+		try {
+			const response = await api.get(`/stock/cantidad-disponible/${id_producto}/`);
+			return response.data.cantidad_disponible;
+		} catch (error) {
+			console.error(`Error obteniendo stock para producto ${id_producto}:`, error);
+			return 0;
+		}
+	};
+
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 		setOrden({
@@ -87,6 +98,7 @@ function CrearOrdenDeVenta() {
 			id_producto: "",
 			cantidad: 1,
 			unidad_medida: "",
+			cantidad_disponible: 0,
 		};
 		setFields([...fields, newField]);
 	};
@@ -98,7 +110,7 @@ function CrearOrdenDeVenta() {
 		}
 	};
 
-	const updateProduct = (id, id_producto) => {
+	const updateProduct = async (id, id_producto) => {
 		const productoYaSeleccionado = fields.some(
 			(field) => field.id !== id && field.id_producto === id_producto
 		);
@@ -113,13 +125,20 @@ function CrearOrdenDeVenta() {
 		// Encontrar el producto seleccionado para obtener su unidad de medida
 		const productoSeleccionado = products.find(product => product.id_producto === parseInt(id_producto));
 		const unidadMedida = productoSeleccionado ? productoSeleccionado.unidad_medida : "";
+		
+		// Obtener la cantidad disponible del producto
+		let cantidadDisponible = 0;
+		if (id_producto) {
+			cantidadDisponible = await obtenerCantidadDisponible(id_producto);
+		}
 
 		setFields(
 			fields.map((field) =>
 				field.id === id ? { 
 					...field, 
 					id_producto, 
-					unidad_medida: unidadMedida 
+					unidad_medida: unidadMedida,
+					cantidad_disponible: cantidadDisponible
 				} : field
 			)
 		);
@@ -228,7 +247,7 @@ function CrearOrdenDeVenta() {
 			return;
 		}
 		
-		setCreatingOrder(true); // Iniciar estado de carga
+		setCreatingOrder(true);
 		
 		try {
 			const response = await api.post("/ventas/ordenes-venta/crear/", nuevaOrden);
@@ -242,7 +261,7 @@ function CrearOrdenDeVenta() {
 					fecha_entrega: "",
 					productos: [],
 				});
-				setFields([{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "" }]);
+				setFields([{ id: "1", id_producto: "", cantidad: 1, unidad_medida: "", cantidad_disponible: 0 }]);
 				setErrors({
 					cliente: "",
 					prioridad: "",
@@ -254,23 +273,20 @@ function CrearOrdenDeVenta() {
 		} catch (error) {
 			console.error("Error al crear orden:", error);
 			if (error.response) {
-				// El servidor respondió con un código de error
 				console.error("Detalles del error:", error.response.data);
 				alert(`Error al crear la orden: ${error.response.status} - ${error.response.data.message || 'Error del servidor'}`);
 			} else if (error.request) {
-				// La petición fue hecha pero no se recibió respuesta
 				alert("Error de conexión: No se pudo contactar al servidor");
 			} else {
-				// Algo pasó en la configuración de la petición
 				alert("Error inesperado al crear la orden");
 			}
 		} finally {
-			setCreatingOrder(false); // Finalizar estado de carga
+			setCreatingOrder(false);
 		}
 	};
 
 	function agregarSinId(arrayOrigen) {
-		const sinId = arrayOrigen.map(({ id, ...resto }) => resto);
+		const sinId = arrayOrigen.map(({ id, cantidad_disponible, ...resto }) => resto);
 		return sinId;
 	}
 
@@ -285,12 +301,6 @@ function CrearOrdenDeVenta() {
 			(field) =>
 				field.id !== currentFieldId && field.id_producto === id_producto
 		);
-	};
-
-	// Función para obtener la unidad de medida de un producto
-	const obtenerUnidadMedida = (id_producto) => {
-		const producto = products.find(p => p.id_producto === parseInt(id_producto));
-		return producto ? producto.unidad_medida : "";
 	};
 
 	if (loading) {
@@ -504,6 +514,10 @@ function CrearOrdenDeVenta() {
 													disabled={creatingOrder}
 													className={`${styles.formInput} ${
 														creatingOrder ? styles.disabledInput : ''
+													} ${
+														field.id_producto && field.cantidad > field.cantidad_disponible 
+														? styles.inputError 
+														: ''
 													}`}
 												/>
 											</div>
@@ -516,6 +530,21 @@ function CrearOrdenDeVenta() {
 													creatingOrder ? styles.disabledInput : ''
 												}`}>
 													{field.unidad_medida || "Seleccione un producto"}
+												</div>
+											</div>
+
+											{/* Nueva sección para mostrar cantidad disponible */}
+											<div className={styles.productField}>
+												<label className={styles.fieldLabel}>
+													Stock Disponible
+												</label>
+												<div className={`${styles.stockDisplay} ${
+													creatingOrder ? styles.disabledInput : ''
+												}`}>
+													{field.id_producto 
+														? `${field.cantidad_disponible} ${field.unidad_medida}` 
+														: "Seleccione un producto"
+													}
 												</div>
 											</div>
 										</div>

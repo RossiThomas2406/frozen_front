@@ -204,6 +204,25 @@
   display: inline-block;
 }
 
+/* Agrega esto a tu TablaStockProductos.module.css */
+.thresholdInfo {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.thresholdLabel {
+  color: #666;
+}
+
+.thresholdValue {
+  font-weight: 600;
+  color: #333;
+} 
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
