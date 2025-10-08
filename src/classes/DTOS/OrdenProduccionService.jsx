@@ -198,11 +198,30 @@ class OrdenProduccionService {
 				nombre: estado.descripcion,
 			}));
 
-			return estadosTransformados;
+
+			const estadosOrdenados = this.ordenarEstadosProduccion(estadosTransformados)
+			
+
+			return estadosOrdenados;
 		} catch (error) {
 			console.error("Error en obtenerEstados:", error);
 			throw new Error("No se pudieron cargar los estados");
 		}
+	}
+
+	static ordenarEstadosProduccion(datos) {
+		// numeros para agregar orden a los estados.
+		const mapaDeOrden = [3,4,2,1,5];
+
+		// El resto de la lógica es exactamente la misma.
+		const datosConOrden = datos.map((item, index) => ({
+			...item,
+			// Ahora "Cancelado" encontrará su valor y no usará el default.
+			orden: mapaDeOrden[index] || 99,
+		}));
+
+		const datosOrdenados = datosConOrden.sort((a, b) => a.orden - b.orden);
+		return datosOrdenados;
 	}
 
 	// Función para obtener todos los operarios (rol = 1)

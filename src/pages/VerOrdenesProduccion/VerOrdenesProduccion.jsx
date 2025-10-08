@@ -65,7 +65,6 @@ const VerOrdenesProduccion = () => {
 					OrdenProduccionService.obtenerOperarios(),
 					OrdenProduccionService.obtenerProductos(),
 				]);
-
 				setEstadosDisponibles(estados);
 				setOperariosDisponibles(operarios);
 				setProductos(productosData);
@@ -423,7 +422,7 @@ const VerOrdenesProduccion = () => {
 			);
 
 			await obtenerOrdenes(paginacion.currentPage);
-			
+
 		} catch (error) {
 			console.log(error);
 		}
@@ -518,7 +517,7 @@ const VerOrdenesProduccion = () => {
 						<option value="todos">Todos los estados</option>
 						{estadosUnicos.map((estado) => (
 							<option key={estado.id} value={estado.id}>
-								{estado.nombre}
+								{estado.orden} - {estado.nombre}
 							</option>
 						))}
 					</select>
