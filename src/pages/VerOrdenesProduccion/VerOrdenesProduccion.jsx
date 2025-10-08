@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import Modal from 'react-modal';
+import Modal from "react-modal";
 import styles from "./VerOrdenesProduccion.module.css";
 import OrdenProduccionService from "../../classes/DTOS/OrdenProduccionService";
 
 // Configurar el modal para accesibilidad
-Modal.setAppElement('#root');
+Modal.setAppElement("#root");
 
 const VerOrdenesProduccion = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -21,7 +21,7 @@ const VerOrdenesProduccion = () => {
 		count: 0,
 		next: null,
 		previous: null,
-		pageSize: 10
+		pageSize: 10,
 	});
 
 	// Estados para las listas de filtros
@@ -41,13 +41,15 @@ const VerOrdenesProduccion = () => {
 	const [registrandoDesperdicio, setRegistrandoDesperdicio] = useState(false);
 
 	// Estados para el modal de control de calidad
-	const [modalControlCalidadAbierto, setModalControlCalidadAbierto] = useState(false);
+	const [modalControlCalidadAbierto, setModalControlCalidadAbierto] =
+		useState(false);
 	const [datosControlCalidad, setDatosControlCalidad] = useState({
 		observaciones: "",
 		aprobado: true,
-		cantidadAprobada: 0
+		cantidadAprobada: 0,
 	});
-	const [registrandoControlCalidad, setRegistrandoControlCalidad] = useState(false);
+	const [registrandoControlCalidad, setRegistrandoControlCalidad] =
+		useState(false);
 
 	// Obtener filtros desde los parámetros de URL
 	const [filtroProducto, setFiltroProducto] = useState("todos");
@@ -93,8 +95,11 @@ const VerOrdenesProduccion = () => {
 				operario: filtroOperario !== "todos" ? filtroOperario : null,
 			};
 
-			const response = await OrdenProduccionService.obtenerOrdenesPaginated(page, filtros);
-			
+			const response = await OrdenProduccionService.obtenerOrdenesPaginated(
+				page,
+				filtros
+			);
+
 			setOrdenes(response.ordenes);
 			setOrdenesFiltradas(response.ordenes);
 			setPaginacion({
@@ -103,7 +108,7 @@ const VerOrdenesProduccion = () => {
 				count: response.paginacion.count,
 				next: response.paginacion.next,
 				previous: response.paginacion.previous,
-				pageSize: 10
+				pageSize: 10,
 			});
 		} catch (err) {
 			setError("Error al cargar las órdenes");
@@ -134,7 +139,7 @@ const VerOrdenesProduccion = () => {
 
 	// Obtener unidad de medida del producto
 	const obtenerUnidadMedida = (idProducto) => {
-		const producto = productos.find(p => p.id_producto === idProducto);
+		const producto = productos.find((p) => p.id_producto === idProducto);
 		return producto ? producto.unidad_medida : "Unidades";
 	};
 
@@ -146,8 +151,8 @@ const VerOrdenesProduccion = () => {
 			finalizado: "#27ae60",
 			"Pendiente de inicio": "#f39c12",
 			"En proceso": "#3498db",
-			"Finalizada": "#27ae60",
-			"Cancelado": "#e74c3c"
+			Finalizada: "#27ae60",
+			Cancelado: "#e74c3c",
 		};
 		return colores[estado] || "#95a5a6";
 	};
@@ -170,7 +175,6 @@ const VerOrdenesProduccion = () => {
 			}
 
 			await obtenerOrdenes(paginacion.currentPage);
-
 		} catch (error) {
 			console.error("Error al actualizar la orden:", error);
 		}
@@ -200,22 +204,25 @@ const VerOrdenesProduccion = () => {
 
 		setCancelando(true);
 		try {
-			console.log("Cancelando orden:", {
-				ordenId: ordenSeleccionada.id,
-				razon: razonCancelacion,
-				fecha: new Date().toISOString()
-			});
+			const response = await fetch(
+				`https://frozenback-test.up.railway.app/api/produccion/ordenes/${ordenSeleccionada.id}/actualizar_estado/`,
+				{
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ id_estado_orden_produccion: 7 }), // 7 = Cancelada
+				}
+			);
 
-			// Simular llamada API
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			if (response.ok) {
+				alert("Orden de producción cancelada.");
+			}
 
-			alert(`Orden #${ordenSeleccionada.id} cancelada exitosamente\nRazón: ${razonCancelacion}`);
-			
 			// Recargar las órdenes para reflejar el cambio
 			await obtenerOrdenes(paginacion.currentPage);
-			
+
 			cerrarModalCancelar();
-			
 		} catch (error) {
 			console.error("Error al cancelar la orden:", error);
 			alert("Error al cancelar la orden. Por favor, intenta nuevamente.");
@@ -247,7 +254,9 @@ const VerOrdenesProduccion = () => {
 		}
 
 		if (cantidadDesperdicio > ordenSeleccionada.cantidad) {
-			alert("La cantidad de desperdicio no puede ser mayor a la cantidad total de la orden");
+			alert(
+				"La cantidad de desperdicio no puede ser mayor a la cantidad total de la orden"
+			);
 			return;
 		}
 
@@ -258,19 +267,22 @@ const VerOrdenesProduccion = () => {
 				productoId: ordenSeleccionada.id_producto,
 				cantidad: cantidadDesperdicio,
 				unidadMedida: obtenerUnidadMedida(ordenSeleccionada.id_producto),
-				fecha: new Date().toISOString()
+				fecha: new Date().toISOString(),
 			});
 
 			// Simular llamada API
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await new Promise((resolve) => setTimeout(resolve, 1500));
 
-			alert(`Desperdicio registrado exitosamente\nCantidad: ${cantidadDesperdicio} ${obtenerUnidadMedida(ordenSeleccionada.id_producto)}`);
-			
+			alert(
+				`Desperdicio registrado exitosamente\nCantidad: ${cantidadDesperdicio} ${obtenerUnidadMedida(
+					ordenSeleccionada.id_producto
+				)}`
+			);
+
 			// Recargar las órdenes para reflejar el cambio
 			await obtenerOrdenes(paginacion.currentPage);
-			
+
 			cerrarModalDesperdicio();
-			
 		} catch (error) {
 			console.error("Error al registrar desperdicio:", error);
 			alert("Error al registrar desperdicio. Por favor, intenta nuevamente.");
@@ -285,7 +297,7 @@ const VerOrdenesProduccion = () => {
 		setDatosControlCalidad({
 			observaciones: "",
 			aprobado: true,
-			cantidadAprobada: orden.cantidad
+			cantidadAprobada: orden.cantidad,
 		});
 		setModalControlCalidadAbierto(true);
 	};
@@ -297,7 +309,7 @@ const VerOrdenesProduccion = () => {
 		setDatosControlCalidad({
 			observaciones: "",
 			aprobado: true,
-			cantidadAprobada: 0
+			cantidadAprobada: 0,
 		});
 		setRegistrandoControlCalidad(false);
 	};
@@ -310,7 +322,9 @@ const VerOrdenesProduccion = () => {
 		}
 
 		if (datosControlCalidad.cantidadAprobada > ordenSeleccionada.cantidad) {
-			alert("La cantidad aprobada no puede ser mayor a la cantidad total de la orden");
+			alert(
+				"La cantidad aprobada no puede ser mayor a la cantidad total de la orden"
+			);
 			return;
 		}
 
@@ -323,23 +337,28 @@ const VerOrdenesProduccion = () => {
 				cantidadAprobada: datosControlCalidad.cantidadAprobada,
 				observaciones: datosControlCalidad.observaciones,
 				unidadMedida: obtenerUnidadMedida(ordenSeleccionada.id_producto),
-				fecha: new Date().toISOString()
+				fecha: new Date().toISOString(),
 			});
 
 			// Simular llamada API
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await new Promise((resolve) => setTimeout(resolve, 1500));
 
 			const estado = datosControlCalidad.aprobado ? "APROBADO" : "RECHAZADO";
-			alert(`Control de calidad registrado exitosamente\nEstado: ${estado}\nCantidad Aprobada: ${datosControlCalidad.cantidadAprobada} ${obtenerUnidadMedida(ordenSeleccionada.id_producto)}`);
-			
+			alert(
+				`Control de calidad registrado exitosamente\nEstado: ${estado}\nCantidad Aprobada: ${
+					datosControlCalidad.cantidadAprobada
+				} ${obtenerUnidadMedida(ordenSeleccionada.id_producto)}`
+			);
+
 			// Recargar las órdenes para reflejar el cambio
 			await obtenerOrdenes(paginacion.currentPage);
-			
+
 			cerrarModalControlCalidad();
-			
 		} catch (error) {
 			console.error("Error al registrar control de calidad:", error);
-			alert("Error al registrar control de calidad. Por favor, intenta nuevamente.");
+			alert(
+				"Error al registrar control de calidad. Por favor, intenta nuevamente."
+			);
 		} finally {
 			setRegistrandoControlCalidad(false);
 		}
@@ -388,6 +407,26 @@ const VerOrdenesProduccion = () => {
 			estado: filtroEstado,
 			operario: nuevoOperario,
 		});
+	};
+
+	const manejarFinalizar = async (idOrden) => {
+		try {
+			const response = await fetch(
+				`https://frozenback-test.up.railway.app/api/produccion/ordenes/${idOrden}/actualizar_estado/`,
+				{
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ id_estado_orden_produccion: 2 }), // 7 = Cancelada
+				}
+			);
+
+			await obtenerOrdenes(paginacion.currentPage);
+			
+		} catch (error) {
+			console.log(error);
+		}
 	};
 
 	const formatearFecha = (fechaISO) => {
@@ -511,8 +550,9 @@ const VerOrdenesProduccion = () => {
 
 			{/* Contador de resultados */}
 			<div className={styles.contador}>
-				Mostrando {ordenesFiltradas.length} de {paginacion.count} órdenes 
-				{paginacion.totalPages > 1 && ` (Página ${paginacion.currentPage} de ${paginacion.totalPages})`}
+				Mostrando {ordenesFiltradas.length} de {paginacion.count} órdenes
+				{paginacion.totalPages > 1 &&
+					` (Página ${paginacion.currentPage} de ${paginacion.totalPages})`}
 			</div>
 
 			{/* Lista de órdenes */}
@@ -574,8 +614,13 @@ const VerOrdenesProduccion = () => {
 
 								{orden.estado === "En proceso" ? (
 									<>
-										<button className={styles.btnFinalizar}>Finalizar</button>
-										<button 
+										<button
+											className={styles.btnFinalizar}
+											onClick={() => manejarFinalizar(orden.id)}
+										>
+											Finalizar
+										</button>
+										<button
 											className={styles.btnCancelar}
 											onClick={() => abrirModalCancelar(orden)}
 										>
@@ -586,13 +631,13 @@ const VerOrdenesProduccion = () => {
 
 								{orden.estado === "Finalizada" ? (
 									<>
-										<button 
+										<button
 											className={styles.btnDesperdicio}
 											onClick={() => abrirModalDesperdicio(orden)}
 										>
 											Desperdicio
 										</button>
-										<button 
+										<button
 											className={styles.btnControlCalidad}
 											onClick={() => abrirModalControlCalidad(orden)}
 										>
@@ -653,12 +698,18 @@ const VerOrdenesProduccion = () => {
 			>
 				<div className={styles.modalContent}>
 					<h2 className={styles.modalTitulo}>Cancelar Orden de Producción</h2>
-					
+
 					{ordenSeleccionada && (
 						<div className={styles.modalInfo}>
-							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
-							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
-							<p><strong>Cantidad:</strong> {ordenSeleccionada.cantidad} unidades</p>
+							<p>
+								<strong>Orden #:</strong> {ordenSeleccionada.id}
+							</p>
+							<p>
+								<strong>Producto:</strong> {ordenSeleccionada.producto}
+							</p>
+							<p>
+								<strong>Cantidad:</strong> {ordenSeleccionada.cantidad} unidades
+							</p>
 						</div>
 					)}
 
@@ -699,7 +750,7 @@ const VerOrdenesProduccion = () => {
 									Cancelando...
 								</>
 							) : (
-								'Confirmar Cancelación'
+								"Confirmar Cancelación"
 							)}
 						</button>
 					</div>
@@ -716,12 +767,19 @@ const VerOrdenesProduccion = () => {
 			>
 				<div className={styles.modalContent}>
 					<h2 className={styles.modalTitulo}>Registrar Desperdicio</h2>
-					
+
 					{ordenSeleccionada && (
 						<div className={styles.modalInfo}>
-							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
-							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
-							<p><strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad} unidades</p>
+							<p>
+								<strong>Orden #:</strong> {ordenSeleccionada.id}
+							</p>
+							<p>
+								<strong>Producto:</strong> {ordenSeleccionada.producto}
+							</p>
+							<p>
+								<strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad}{" "}
+								unidades
+							</p>
 						</div>
 					)}
 
@@ -741,7 +799,9 @@ const VerOrdenesProduccion = () => {
 								required
 							/>
 							<span className={styles.unidadMedida}>
-								{ordenSeleccionada ? obtenerUnidadMedida(ordenSeleccionada.id_producto) : "Unidades"}
+								{ordenSeleccionada
+									? obtenerUnidadMedida(ordenSeleccionada.id_producto)
+									: "Unidades"}
 							</span>
 						</div>
 						<small className={styles.modalHelp}>
@@ -768,7 +828,7 @@ const VerOrdenesProduccion = () => {
 									Registrando...
 								</>
 							) : (
-								'Registrar Desperdicio'
+								"Registrar Desperdicio"
 							)}
 						</button>
 					</div>
@@ -785,30 +845,37 @@ const VerOrdenesProduccion = () => {
 			>
 				<div className={styles.modalContent}>
 					<h2 className={styles.modalTitulo}>Control de Calidad</h2>
-					
+
 					{ordenSeleccionada && (
 						<div className={styles.modalInfo}>
-							<p><strong>Orden #:</strong> {ordenSeleccionada.id}</p>
-							<p><strong>Producto:</strong> {ordenSeleccionada.producto}</p>
-							<p><strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad} unidades</p>
+							<p>
+								<strong>Orden #:</strong> {ordenSeleccionada.id}
+							</p>
+							<p>
+								<strong>Producto:</strong> {ordenSeleccionada.producto}
+							</p>
+							<p>
+								<strong>Cantidad Total:</strong> {ordenSeleccionada.cantidad}{" "}
+								unidades
+							</p>
 						</div>
 					)}
 
 					<div className={styles.modalForm}>
 						<div className={styles.formGroup}>
-							<label className={styles.modalLabel}>
-								Estado de Calidad
-							</label>
+							<label className={styles.modalLabel}>Estado de Calidad</label>
 							<div className={styles.radioGroup}>
 								<label className={styles.radioLabel}>
 									<input
 										type="radio"
 										value="true"
 										checked={datosControlCalidad.aprobado}
-										onChange={(e) => setDatosControlCalidad({
-											...datosControlCalidad,
-											aprobado: e.target.value === "true"
-										})}
+										onChange={(e) =>
+											setDatosControlCalidad({
+												...datosControlCalidad,
+												aprobado: e.target.value === "true",
+											})
+										}
 										className={styles.radioInput}
 									/>
 									<span className={styles.radioCustom}></span>
@@ -819,10 +886,12 @@ const VerOrdenesProduccion = () => {
 										type="radio"
 										value="false"
 										checked={!datosControlCalidad.aprobado}
-										onChange={(e) => setDatosControlCalidad({
-											...datosControlCalidad,
-											aprobado: e.target.value === "true"
-										})}
+										onChange={(e) =>
+											setDatosControlCalidad({
+												...datosControlCalidad,
+												aprobado: e.target.value === "true",
+											})
+										}
 										className={styles.radioInput}
 									/>
 									<span className={styles.radioCustom}></span>
@@ -840,18 +909,21 @@ const VerOrdenesProduccion = () => {
 									type="number"
 									id="cantidadAprobada"
 									value={datosControlCalidad.cantidadAprobada}
-									onChange={(e) => setDatosControlCalidad({
-										...datosControlCalidad,
-										cantidadAprobada: Number(e.target.value)
-									})}
+									onChange={(e) =>
+										setDatosControlCalidad({
+											...datosControlCalidad,
+											cantidadAprobada: Number(e.target.value),
+										})
+									}
 									className={styles.modalInput}
 									min="0"
 									max={ordenSeleccionada?.cantidad || 0}
-									
 									required
 								/>
 								<span className={styles.unidadMedida}>
-									{ordenSeleccionada ? obtenerUnidadMedida(ordenSeleccionada.id_producto) : "Unidades"}
+									{ordenSeleccionada
+										? obtenerUnidadMedida(ordenSeleccionada.id_producto)
+										: "Unidades"}
 								</span>
 							</div>
 						</div>
@@ -863,10 +935,12 @@ const VerOrdenesProduccion = () => {
 							<textarea
 								id="observaciones"
 								value={datosControlCalidad.observaciones}
-								onChange={(e) => setDatosControlCalidad({
-									...datosControlCalidad,
-									observaciones: e.target.value
-								})}
+								onChange={(e) =>
+									setDatosControlCalidad({
+										...datosControlCalidad,
+										observaciones: e.target.value,
+									})
+								}
 								className={styles.modalTextarea}
 								placeholder="Ingresa observaciones sobre la calidad del producto..."
 								rows={3}
@@ -885,7 +959,10 @@ const VerOrdenesProduccion = () => {
 						<button
 							onClick={manejarRegistrarControlCalidad}
 							className={styles.btnModalConfirmar}
-							disabled={registrandoControlCalidad || datosControlCalidad.cantidadAprobada < 0}
+							disabled={
+								registrandoControlCalidad ||
+								datosControlCalidad.cantidadAprobada < 0
+							}
 						>
 							{registrandoControlCalidad ? (
 								<>
@@ -893,7 +970,7 @@ const VerOrdenesProduccion = () => {
 									Registrando...
 								</>
 							) : (
-								'Registrar Control'
+								"Registrar Control"
 							)}
 						</button>
 					</div>
