@@ -68,6 +68,7 @@ const Ventas = () => {
 
       const response = await axios.get(
         `https://frozenback-test.up.railway.app/api/ventas/ordenes-venta/?${params.toString()}`
+        
       );
       
       const data = response.data;
@@ -266,6 +267,20 @@ const Ventas = () => {
       setCancelandoOrden(null);
     }
   };
+
+    // Función para navegar a generar factura
+  const handleGenerarFactura = (idOrdenVenta) => {
+    navigate(`/generar-factura/${idOrdenVenta}`);
+  };
+
+  // Función para verificar si una orden puede ser facturada
+  const puedeFacturarOrden = (orden) => {
+    const estadoDescripcion = getDescripcionEstado(orden.estado_venta);
+    // Solo permitir facturar órdenes que no estén canceladas
+    const estadosNoFacturables = ['Cancelada'];
+    return !estadosNoFacturables.includes(estadoDescripcion);
+  };
+
 
   // Función para verificar si una orden puede ser cancelada
   const puedeCancelarOrden = (orden) => {
@@ -671,9 +686,23 @@ const Ventas = () => {
                 <span className={styles.fechaEntregaValor}> {formatFecha(orden.fecha_entrega)}</span>
               </div>
 
-              {/* BOTÓN PARA CANCELAR ORDEN - NUEVO */}
-              {puedeCancelarOrden(orden) && (
-                <div className={styles.botonesAccion}>
+              {/* BOTONES DE ACCIÓN - INCLUYENDO FACTURAR */}
+              <div className={styles.botonesAccion}>
+                {/* Botón para facturar */}
+                {puedeFacturarOrden(orden) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerarFactura(orden.id_orden_venta);
+                    }}
+                    className={styles.botonFacturar}
+                  >
+                    Facturar
+                  </button>
+                )}
+                
+                {/* Botón para cancelar orden */}
+                {puedeCancelarOrden(orden) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -684,8 +713,8 @@ const Ventas = () => {
                   >
                     {cancelandoOrden === orden.id_orden_venta ? 'Cancelando...' : 'Cancelar Orden'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className={styles.ordenBody}>

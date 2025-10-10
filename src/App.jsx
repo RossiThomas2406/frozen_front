@@ -11,6 +11,7 @@ import CrearOrdenProduccion from "./pages/CrearOrdenProduccion/CrearOrdenProducc
 import FormularioEmpleado from "./pages/FormularioEmpleado/FormularioEmpleado";
 import VerOrdenesProduccion from "./pages/VerOrdenesProduccion/VerOrdenesProduccion";
 import TablaStockProductos from "./pages/VerStockProductos/TablaStockProductos";
+import GeneradorFactura from "./pages/GeneradorFactura/GeneradorFactura";
 import "./App.css";
 
 import ProtectedAuth from "./utils/ProtectedAuth";
@@ -42,9 +43,11 @@ function App() {
 						<Route path="/crearUsuario" element={<FormularioEmpleado />} />
 						<Route path="/verOrdenesVenta" element={<Ventas />} />
 						<Route path="/crearOrdenVenta" element={<CrearOrdenDeVenta />} />
+						<Route path="/generar-factura/:idOrden" element={<GeneradorFactura />} />
 						<Route path="/crearOrdenProduccion" element={<CrearOrdenProduccion />}/>
 						<Route path="/verOrdenesProduccion" element={<VerOrdenesProduccion />}/>
 						<Route path="/verStockProductos" element={<TablaStockProductos />}/>
+
 						{/*</Route>*/}
 					</Routes>
 				</main>
